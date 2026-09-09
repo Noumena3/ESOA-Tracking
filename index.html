@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Suivi ESOA - Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+
+    <nav class="bg-indigo-700 text-white shadow-lg">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center gap-2">
+                    <i class="fas fa-box-open text-2xl"></i>
+                    <span class="text-xl font-bold tracking-tight">Suivi ESOA</span>
+                </div>
+                <div class="flex items-center gap-3">
+                    <button id="btn-export" class="bg-indigo-600 hover:bg-indigo-500 text-white px-3 py-2 rounded-lg transition-all flex items-center gap-2 text-sm font-medium border border-indigo-400">
+                        <i class="fas fa-download"></i> Export
+                    </button>
+                    <label for="import-file" class="bg-indigo-600 hover:bg-indigo-500 text-white px-3 py-2 rounded-lg transition-all flex items-center gap-2 text-sm font-medium border border-indigo-400 cursor-pointer">
+                        <i class="fas fa-upload"></i> Import
+                    </label>
+                    <input type="file" id="import-file" class="hidden" accept=".json">
+                    <button id="btn-add" class="bg-white text-indigo-700 hover:bg-gray-100 px-4 py-2 rounded-lg transition-all flex items-center gap-2 text-sm font-bold">
+                        <i class="fas fa-plus"></i> Ajouter un article
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+        <!-- Summary Cards -->
+        <div class="grid grid-cols-3 gap-4 mb-8">
+            <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-xs text-gray-500 font-medium">Total Articles</p>
+                        <h3 id="stat-total" class="text-2xl font-bold text-gray-900">0</h3>
+                    </div>
+                    <div class="bg-indigo-100 p-2 rounded-lg text-indigo-600">
+                        <i class="fas fa-list-ul text-lg"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-xs text-gray-500 font-medium">Livrés</p>
+                        <h3 id="stat-delivered" class="text-2xl font-bold text-green-600">0</h3>
+                    </div>
+                    <div class="bg-green-100 p-2 rounded-lg text-green-600">
+                        <i class="fas fa-check-circle text-lg"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-xs text-gray-500 font-medium">En Transit</p>
+                        <h3 id="stat-transit" class="text-2xl font-bold text-amber-600">0</h3>
+                    </div>
+                    <div class="bg-amber-100 p-2 rounded-lg text-amber-600">
+                        <i class="fas fa-truck text-lg"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-xs text-gray-500 font-medium">Total Frais</p>
+                        <h3 id="stat-total-frais" class="text-2xl font-bold text-indigo-600">0 Ar</h3>
+                    </div>
+                    <div class="bg-indigo-50 p-2 rounded-lg text-indigo-600">
+                        <i class="fas fa-coins text-lg"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-xs text-gray-500 font-medium">Frais Livrés</p>
+                        <h3 id="stat-frais-livres" class="text-2xl font-bold text-green-600">0 Ar</h3>
+                    </div>
+                    <div class="bg-green-50 p-2 rounded-lg text-green-600">
+                        <i class="fas fa-hand-holding-usd text-lg"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-xs text-gray-500 font-medium">Frais Transit</p>
+                        <h3 id="stat-frais-transit" class="text-2xl font-bold text-amber-600">0 Ar</h3>
+                    </div>
+                    <div class="bg-amber-50 p-2 rounded-lg text-amber-600">
+                        <i class="fas fa-truck-fast text-lg"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Search and Table Section -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+            <div class="p-6 border-b border-gray-100 flex flex-col lg:flex-row justify-between items-center gap-4">
+                <h2 class="text-lg font-semibold text-gray-800">Liste des expéditions</h2>
+                <div class="flex flex-col sm:flex-row items-center gap-4 w-full lg:w-auto">
+                    <div class="relative w-full sm:w-48">
+                        <i class="fas fa-user absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                        <select id="user-filter" class="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all text-sm appearance-none bg-white">
+                            <option value="All">Tous les utilisateurs</option>
+                            <option value="Noumena">Noumena</option>
+                            <option value="Eric">Eric</option>
+                            <option value="Mika">Mika</option>
+                        </select>
+                    </div>
+                    <div class="relative w-full sm:w-72">
+                        <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                        <input type="text" id="search-input" placeholder="Rechercher ID ou article..."
+                               class="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all text-sm">
+                    </div>
+                </div>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead class="bg-gray-50 text-gray-600 text-xs uppercase font-semibold">
+                        <tr>
+                            <th class="px-6 py-4 border-b border-gray-100">Utilisateur</th>
+                            <th class="px-6 py-4 border-b border-gray-100">ID Tracking</th>
+                            <th class="px-6 py-4 border-b border-gray-100">Article</th>
+                            <th class="px-6 py-4 border-b border-gray-100">Frais Transit</th>
+                            <th class="px-6 py-4 border-b border-gray-100">Status</th>
+                            <th class="px-6 py-4 border-b border-gray-100 text-right">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tracking-table-body" class="text-sm text-gray-700 divide-y divide-gray-100">
+                        <!-- Data will be injected here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <!-- Modal Form -->
+    <div id="modal-add" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-2xl max-w-md w-full p-8 shadow-2xl transform transition-all">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-xl font-bold text-gray-900">Nouvel Article</h3>
+                <button id="btn-close-modal" class="text-gray-400 hover:text-gray-600">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            <form id="add-form" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Utilisateur</label>
+                    <select id="form-user" required class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none">
+                        <option value="Noumena">Noumena</option>
+                        <option value="Eric">Eric</option>
+                        <option value="Mika">Mika</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">ID Tracking</label>
+                    <input type="text" id="form-id" required class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Article</label>
+                    <input type="text" id="form-article" required class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Frais Transit</label>
+                    <input type="number" id="form-frais" required class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                    <select id="form-status" class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none">
+                        <option value="En transit">En transit</option>
+                        <option value="Livré">Livré</option>
+                    </select>
+                </div>
+                <div class="pt-4">
+                    <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-lg transition-all">
+                        Enregistrer
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

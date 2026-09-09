@@ -1,0 +1,158 @@
+const INITIAL_DATA = [
+    { user: "Noumena", id: "9818990822658", article: "Inconnu", frais: 3290, status: "En transit" },
+    { user: "Noumena", id: "YT8896131647185", article: "Inconnu", frais: 5264, status: "En transit" },
+    { user: "Noumena", id: "JT5519312447454", article: "Inconnu", frais: 3290, status: "En transit" },
+    { user: "Noumena", id: "777441840988035", article: "T-shirt", frais: 5264, status: "Livré" },
+    { user: "Eric", id: "JT3175490504787", article: "Manette", frais: 0, status: "En transit" },
+    { user: "Eric", id: "435334295550988", article: "chargeur", frais: 23030, status: "En transit" },
+    { user: "Eric", id: "JT3175517602922", article: "Montre", frais: 9870, status: "En transit" },
+    { user: "Eric", id: "79029277524913", article: "hair band", frais: 32900, status: "En transit" },
+    { user: "Eric", id: "79029548063488", article: "casquette", frais: 19740, status: "En transit" },
+    { user: "Eric", id: "79029841206427", article: "Boucle d'oreille léopard", frais: 6580, status: "En transit" },
+    { user: "Eric", id: "79029686388457", article: "Boucle d'oreille", frais: 7238, status: "En transit" },
+    { user: "Eric", id: "KK300137307563", article: "Blender", frais: 0, status: "En transit" },
+    { user: "Eric", id: "435340312208319", article: "Bonnet enfant", frais: 42770, status: "En transit" },
+    { user: "Eric", id: "79030316729582", article: "Porte clé", frais: 8554, status: "En transit" },
+    { user: "Eric", id: "79030276170264", article: "Collier inoxydable", frais: 5264, status: "En transit" },
+    { user: "Eric", id: "YT7642091117821", article: "Satroka", frais: 11186, status: "En transit" },
+    { user: "Mika", id: "9823103539132", article: "Housse Noire", frais: 13160, status: "En transit" },
+    { user: "Mika", id: "773439723202052", article: "Housse blanche", frais: 6580, status: "En transit" },
+];
+
+let shipments = [];
+
+// Elements
+const tableBody = document.getElementById('tracking-table-body');
+const searchInput = document.getElementById('search-input');
+const userFilter = document.getElementById('user-filter');
+const btnAdd = document.getElementById('btn-add');
+const modalAdd = document.getElementById('modal-add');
+const btnCloseModal = document.getElementById('btn-close-modal');
+const addForm = document.getElementById('add-form');
+
+const statTotal = document.getElementById('stat-total');
+const statDelivered = document.getElementById('stat-delivered');
+const statTransit = document.getElementById('stat-transit');
+
+const userColors = {
+    "Noumena": "bg-blue-100 text-blue-700",
+    "Eric": "bg-purple-100 text-purple-700",
+    "Mika": "bg-pink-100 text-pink-700"
+};
+
+// Initialize data
+function init() {
+    const savedData = localStorage.getItem('esoa_shipments_v2');
+    if (savedData) {
+        shipments = JSON.parse(savedData);
+    } else {
+        shipments = [...INITIAL_DATA];
+        saveToLocalStorage();
+    }
+    render();
+}
+
+function saveToLocalStorage() {
+    localStorage.setItem('esoa_shipments_v2', JSON.stringify(shipments));
+}
+
+function render() {
+    tableBody.innerHTML = "";
+    const filterText = searchInput.value;
+    const filterUser = userFilter.value;
+
+    const filtered = shipments.filter(s => {
+        const matchesText = s.id.toLowerCase().includes(filterText.toLowerCase()) ||
+                            s.article.toLowerCase().includes(filterText.toLowerCase());
+        const matchesUser = filterUser === "All" || s.user === filterUser;
+        return matchesText && matchesUser;
+    });
+
+    filtered.forEach((s) => {
+        const row = document.createElement('tr');
+        row.className = "hover:bg-gray-50 transition-colors";
+        row.innerHTML = `
+            <td class="px-6 py-4">
+                <span class="px-2 py-1 rounded-full text-xs font-medium ${userColors[s.user] || 'bg-gray-100 text-gray-700'}">
+                    ${s.user}
+                </span>
+            </td>
+            <td class="px-6 py-4 font-medium text-gray-900">${s.id}</td>
+            <td class="px-6 py-4">${s.article}</td>
+            <td class="px-6 py-4">${s.frais.toLocaleString()} Ar</td>
+            <td class="px-6 py-4">
+                <span class="px-2 py-1 rounded-full text-xs font-medium ${s.status === 'Livré' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}">
+                    ${s.status}
+                </span>
+            </td>
+            <td class="px-6 py-4 text-right space-x-2">
+                <button onclick="toggleStatus('${s.id}')" class="text-indigo-600 hover:text-indigo-900 p-1" title="Changer Status">
+                    <i class="fas fa-sync-alt"></i>
+                </button>
+                <button onclick="deleteShipment('${s.id}')" class="text-red-600 hover:text-red-900 p-1" title="Supprimer">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </td>
+        `;
+        tableBody.appendChild(row);
+    });
+
+    statTotal.innerText = shipments.length;
+    statDelivered.innerText = shipments.filter(s => s.status === "Livré").length;
+    statTransit.innerText = shipments.filter(s => s.status !== "Livré").length;
+}
+
+// Actions
+window.toggleStatus = (id) => {
+    shipments = shipments.map(s => {
+        if (s.id === id) {
+            return { ...s, status: s.status === "Livré" ? "En transit" : "Livré" };
+        }
+        return s;
+    });
+    saveToLocalStorage();
+    render();
+};
+
+window.deleteShipment = (id) => {
+    if (confirm("Voulez-vous vraiment supprimer cet article ?")) {
+        shipments = shipments.filter(s => s.id !== id);
+        saveToLocalStorage();
+        render();
+    }
+};
+
+// Event Listeners
+searchInput.addEventListener('input', render);
+userFilter.addEventListener('change', render);
+
+btnAdd.addEventListener('click', () => {
+    modalAdd.classList.remove('hidden');
+    modalAdd.classList.add('flex');
+});
+
+btnCloseModal.addEventListener('click', () => {
+    modalAdd.classList.add('hidden');
+    modalAdd.classList.remove('flex');
+});
+
+addForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const newShipment = {
+        user: document.getElementById('form-user').value,
+        id: document.getElementById('form-id').value,
+        article: document.getElementById('form-article').value,
+        frais: parseInt(document.getElementById('form-frais').value) || 0,
+        status: document.getElementById('form-status').value,
+    };
+
+    shipments.push(newShipment);
+    saveToLocalStorage();
+    render();
+
+    addForm.reset();
+    modalAdd.classList.add('hidden');
+    modalAdd.classList.remove('flex');
+});
+
+init();
