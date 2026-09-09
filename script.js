@@ -1,29 +1,7 @@
-const INITIAL_DATA = [
-    { username: "Noumena", id: "9818990822658", article: "Inconnu", frais: 3290, status: "En transit" },
-    { username: "Noumena", id: "YT8896131647185", article: "Inconnu", frais: 5264, status: "En transit" },
-    { username: "Noumena", id: "JT5519312447454", article: "Inconnu", frais: 3290, status: "En transit" },
-    { username: "Noumena", id: "777441840988035", article: "T-shirt", frais: 5264, status: "Livré" },
-    { username: "Eric", id: "JT3175490504787", article: "Manette", frais: 0, status: "En transit" },
-    { username: "Eric", id: "435334295550988", article: "chargeur", frais: 23030, status: "En transit" },
-    { username: "Eric", id: "JT3175517602922", article: "Montre", frais: 9870, status: "En transit" },
-    { username: "Eric", id: "79029277524913", article: "hair band", frais: 32900, status: "En transit" },
-    { username: "Eric", id: "79029548063488", article: "casquette", frais: 19740, status: "En transit" },
-    { username: "Eric", id: "79029841206427", article: "Boucle d'oreille léopard", frais: 6580, status: "En transit" },
-    { username: "Eric", id: "79029686388457", article: "Boucle d'oreille", frais: 7238, status: "En transit" },
-    { username: "Eric", id: "KK300137307563", article: "Blender", frais: 0, status: "En transit" },
-    { username: "Eric", id: "435340312208319", article: "Bonnet enfant", frais: 42770, status: "En transit" },
-    { username: "Eric", id: "79030316729582", article: "Porte clé", frais: 8554, status: "En transit" },
-    { username: "Eric", id: "79030276170264", article: "Collier inoxydable", frais: 5264, status: "En transit" },
-    { username: "Eric", id: "YT7642091117821", article: "Satroka", frais: 11186, status: "En transit" },
-    { username: "Mika", id: "9823103539132", article: "Housse Noire", frais: 13160, status: "En transit" },
-    { username: "Mika", id: "773439723202052", article: "Housse blanche", frais: 6580, status: "En transit" },
-];
-
-// --- CONFIGURATION SUPABASE (Étape 2) ---
+// CONFIGURATION SUPABASE
 const SUPABASE_URL = 'https://sqzsssdovoekogxnwesx.supabase.co';
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNxenNzc2Rvdm9la29neG53ZXN4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg3NjY2NjAsImV4cCI6MjEwNDM0MjY2MH0.DdGmVY1siGXXtfDXI4bUizxHOsa9H6kMeU1T3DQH8l8';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNxZ3Nzc2Rvdm9la29neG53ZXN4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg3NjY2NjAsImV4cCI6MjEwNDM0MjY2MH0.DdGmVY1siGXXtfDXI4bUizxHOsa9H6kMeU1T3DQH8l8';
 const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-// ---------------------------------------
 
 let shipments = [];
 
@@ -45,11 +23,32 @@ const statTotalFrais = document.getElementById('stat-total-frais');
 const statFraisLivres = document.getElementById('stat-frais-livres');
 const statFraisTransit = document.getElementById('stat-frais-transit');
 
+const loginOverlay = document.getElementById('login-overlay');
+const loginForm = document.getElementById('login-form');
+const loginError = document.getElementById('login-error');
+const btnLogout = document.getElementById('btn-logout');
+
 const userColors = {
     "Noumena": "bg-blue-100 text-blue-700",
     "Eric": "bg-purple-100 text-purple-700",
     "Mika": "bg-pink-100 text-pink-700"
 };
+
+// Initialize app
+async function init() {
+    const { data: { session } } = await supabaseClient.auth.getSession();
+
+    if (session) {
+        console.log("Session active, chargement des données...");
+        loginOverlay.classList.add('hidden');
+        loginOverlay.classList.remove('flex');
+        await fetchShipments();
+    } else {
+        console.log("Aucune session, affichage du login");
+        loginOverlay.classList.remove('hidden');
+        loginOverlay.classList.add('flex');
+    }
+}
 
 async function fetchShipments() {
     try {
@@ -63,30 +62,8 @@ async function fetchShipments() {
         render();
     } catch (err) {
         console.error("Erreur lors de la récupération :", err);
-        // On ne met pas d'alert ici pour éviter d'interrompre l'expérience utilisateur
-        // si c'est juste un problème temporaire.
+        alert("Erreur de connexion à la base de données : " + err.message);
     }
-}
-
-async function init() {
-    // Tentative de récupération Cloud
-    await fetchShipments();
-
-    // Si le Cloud est vide ou échoue, on regarde le local
-    if (!shipments || shipments.length === 0) {
-        console.log("Utilisation du stockage local / données initiales");
-        const savedData = localStorage.getItem('esoa_shipments_local');
-        if (savedData) {
-            shipments = JSON.parse(savedData);
-        } else {
-            shipments = [...INITIAL_DATA];
-        }
-        render();
-    }
-}
-
-function saveToLocalStorage() {
-    localStorage.setItem('esoa_shipments_local', JSON.stringify(shipments));
 }
 
 function render() {
@@ -95,8 +72,8 @@ function render() {
     const filterUser = userFilter.value;
 
     const filtered = shipments.filter(s => {
-        const matchesText = s.id.toLowerCase().includes(filterText.toLowerCase()) ||
-                            s.article.toLowerCase().includes(filterText.toLowerCase());
+        const matchesText = (s.id && s.id.toLowerCase().includes(filterText.toLowerCase())) ||
+                            (s.article && s.article.toLowerCase().includes(filterText.toLowerCase()));
         const matchesUser = filterUser === "All" || s.username === filterUser;
         return matchesText && matchesUser;
     });
@@ -106,12 +83,14 @@ function render() {
     let fraisTransit = 0;
 
     filtered.forEach((s) => {
-        totalFrais += s.frais;
+        const fraisVal = parseInt(s.frais) || 0;
+        totalFrais += fraisVal;
         if (s.status === 'Livré') {
-            fraisLivres += s.frais;
+            fraisLivres += fraisVal;
         } else {
-            fraisTransit += s.frais;
+            fraisTransit += fraisVal;
         }
+
         const row = document.createElement('tr');
         row.className = "hover:bg-gray-50 transition-colors";
         row.innerHTML = `
@@ -155,7 +134,43 @@ function render() {
     statFraisTransit.innerText = fraisTransit.toLocaleString() + " Ar";
 }
 
-// Actions
+// --- Auth Actions ---
+loginForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const email = document.getElementById('login-email').value;
+    const password = document.getElementById('login-password').value;
+    loginError.classList.add('hidden');
+
+    try {
+        const { data, error } = await supabaseClient.auth.signInWithPassword({
+            email,
+            password,
+        });
+
+        if (error) throw error;
+
+        loginOverlay.classList.add('hidden');
+        loginOverlay.classList.remove('flex');
+        await fetchShipments();
+    } catch (err) {
+        loginError.innerText = err.message;
+        loginError.classList.remove('hidden');
+    }
+});
+
+btnLogout.addEventListener('click', async () => {
+    try {
+        await supabaseClient.auth.signOut();
+        loginOverlay.classList.remove('hidden');
+        loginOverlay.classList.add('flex');
+        shipments = [];
+        render();
+    } catch (err) {
+        alert("Erreur lors de la déconnexion : " + err.message);
+    }
+});
+
+// --- Data Actions ---
 window.toggleStatus = async (id) => {
     const shipment = shipments.find(s => s.id === id);
     const newStatus = shipment.status === "Livré" ? "En transit" : "Livré";
@@ -204,7 +219,7 @@ window.updateFrais = async (id, value) => {
     }
 };
 
-// Export/Import Functions
+// Export/Import
 function exportData() {
     const dataStr = JSON.stringify(shipments, null, 2);
     const dataBlob = new Blob([dataStr], { type: 'application/json' });
@@ -227,7 +242,7 @@ function importData(event) {
             const imported = JSON.parse(e.target.result);
             if (!Array.isArray(imported)) throw new Error("Le fichier doit être une liste d'articles.");
 
-            // Remappage des données pour utiliser 'username' au lieu de 'user'
+            // Remapping 'user' -> 'username' for Supabase compatibility
             const remappedData = imported.map(item => {
                 const { user, ...rest } = item;
                 return { username: user || item.username, ...rest };
@@ -236,14 +251,11 @@ function importData(event) {
             const choice = confirm("Voulez-vous REMPLACER toutes vos données Cloud ?\n(Cliquez sur 'Annuler' pour fusionner avec vos données existantes)");
 
             if (choice) {
-                // Clear existing data first
                 const { error: delError } = await supabaseClient.from('shipments').delete().neq('id', '0');
                 if (delError) throw delError;
-
                 const { error: insError } = await supabaseClient.from('shipments').insert(remappedData);
                 if (insError) throw insError;
             } else {
-                // Upsert (merge) - updates existing, inserts new
                 const { error } = await supabaseClient.from('shipments').upsert(remappedData);
                 if (error) throw error;
             }
