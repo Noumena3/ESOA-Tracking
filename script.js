@@ -36,6 +36,9 @@ const userColors = {
     "Mika": "bg-pink-100 text-pink-700"
 };
 
+// État du tri courant : colonne + sens ('asc' ou 'desc')
+let sortState = { column: null, direction: 'asc' };
+
 const statusColors = {
     "En transit": "bg-amber-100 text-amber-700",
     "Livré": "bg-blue-100 text-blue-700",
@@ -88,6 +91,31 @@ function render() {
         const matchesUser = filterUser === "All" || s.username === filterUser;
         return matchesText && matchesUser;
     });
+
+    if (sortState.column) {
+        const col = sortState.column;
+        const dir = sortState.direction === 'asc' ? 1 : -1;
+        filtered.sort((a, b) => {
+            let valA = a[col];
+            let valB = b[col];
+            if (col === 'frais') {
+                valA = parseInt(valA) || 0;
+                valB = parseInt(valB) || 0;
+                return (valA - valB) * dir;
+            }
+            valA = (valA || '').toString().toLowerCase();
+            valB = (valB || '').toString().toLowerCase();
+            if (valA < valB) return -1 * dir;
+            if (valA > valB) return 1 * dir;
+            return 0;
+        });
+    }
+
+    document.querySelectorAll('th[data-sort] .sort-arrow').forEach(el => el.innerText = '');
+    if (sortState.column) {
+        const activeTh = document.querySelector(`th[data-sort="${sortState.column}"] .sort-arrow`);
+        if (activeTh) activeTh.innerText = sortState.direction === 'asc' ? '▲' : '▼';
+    }
 
     let totalFrais = 0;
     let fraisLivres = 0;
@@ -293,6 +321,19 @@ searchInput.addEventListener('input', render);
 userFilter.addEventListener('change', render);
 btnExport.addEventListener('click', exportData);
 importFile.addEventListener('change', importData);
+
+document.querySelectorAll('th[data-sort]').forEach(th => {
+    th.addEventListener('click', () => {
+        const col = th.getAttribute('data-sort');
+        if (sortState.column === col) {
+            sortState.direction = sortState.direction === 'asc' ? 'desc' : 'asc';
+        } else {
+            sortState.column = col;
+            sortState.direction = 'asc';
+        }
+        render();
+    });
+});
 
 btnAdd.addEventListener('click', () => {
     modalAdd.classList.remove('hidden');

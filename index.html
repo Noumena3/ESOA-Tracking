@@ -202,11 +202,11 @@ document.getElementById('chat-bubble').addEventListener('click', function() {
                 <table class="w-full text-left border-collapse">
                     <thead class="bg-gray-50 text-gray-600 text-xs uppercase font-semibold">
                         <tr>
-                            <th class="px-6 py-4 border-b border-gray-100">Utilisateur</th>
-                            <th class="px-6 py-4 border-b border-gray-100">ID Tracking</th>
-                            <th class="px-6 py-4 border-b border-gray-100">Article</th>
-                            <th class="px-6 py-4 border-b border-gray-100">Frais Transit</th>
-                            <th class="px-6 py-4 border-b border-gray-100">Status</th>
+                            <th data-sort="username" class="px-6 py-4 border-b border-gray-100 cursor-pointer select-none hover:text-indigo-600">Utilisateur <span class="sort-arrow"></span></th>
+                            <th data-sort="id" class="px-6 py-4 border-b border-gray-100 cursor-pointer select-none hover:text-indigo-600">ID Tracking <span class="sort-arrow"></span></th>
+                            <th data-sort="article" class="px-6 py-4 border-b border-gray-100 cursor-pointer select-none hover:text-indigo-600">Article <span class="sort-arrow"></span></th>
+                            <th data-sort="frais" class="px-6 py-4 border-b border-gray-100 cursor-pointer select-none hover:text-indigo-600">Frais Transit <span class="sort-arrow"></span></th>
+                            <th data-sort="status" class="px-6 py-4 border-b border-gray-100 cursor-pointer select-none hover:text-indigo-600">Status <span class="sort-arrow"></span></th>
                             <th class="px-6 py-4 border-b border-gray-100 text-right">Actions</th>
                         </tr>
                     </thead>
