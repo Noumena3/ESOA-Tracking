@@ -11,7 +11,6 @@ const searchInput = document.getElementById('search-input');
 const userFilter = document.getElementById('user-filter');
 const btnAdd = document.getElementById('btn-add');
 const btnExport = document.getElementById('btn-export');
-const importFile = document.getElementById('import-file');
 const modalAdd = document.getElementById('modal-add');
 const btnCloseModal = document.getElementById('btn-close-modal');
 const addForm = document.getElementById('add-form');
@@ -265,7 +264,7 @@ window.updateFrais = async (id, value) => {
     }
 };
 
-// Export/Import
+// Export
 function exportData() {
     const dataStr = JSON.stringify(shipments, null, 2);
     const dataBlob = new Blob([dataStr], { type: 'application/json' });
@@ -279,48 +278,10 @@ function exportData() {
     URL.revokeObjectURL(url);
 }
 
-function importData(event) {
-    const file = event.target.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = async (e) => {
-        try {
-            const imported = JSON.parse(e.target.result);
-            if (!Array.isArray(imported)) throw new Error("Le fichier doit être une liste d'articles.");
-
-            // Remapping 'user' -> 'username' for Supabase compatibility
-            const remappedData = imported.map(item => {
-                const { user, ...rest } = item;
-                return { username: user || item.username, ...rest };
-            });
-
-            const choice = confirm("Voulez-vous REMPLACER toutes vos données Cloud ?\n(Cliquez sur 'Annuler' pour fusionner avec vos données existantes)");
-
-            if (choice) {
-                const { error: delError } = await supabaseClient.from('shipments').delete().neq('id', '0');
-                if (delError) throw delError;
-                const { error: insError } = await supabaseClient.from('shipments').insert(remappedData);
-                if (insError) throw insError;
-            } else {
-                const { error } = await supabaseClient.from('shipments').upsert(remappedData);
-                if (error) throw error;
-            }
-
-            await fetchShipments();
-            alert("Données importées avec succès dans le Cloud !");
-        } catch (err) {
-            alert("Erreur lors de l'importation : " + err.message);
-        }
-    };
-    reader.readAsText(file);
-    event.target.value = "";
-}
-
 // Event Listeners
 searchInput.addEventListener('input', render);
 userFilter.addEventListener('change', render);
 btnExport.addEventListener('click', exportData);
-importFile.addEventListener('change', importData);
 
 document.querySelectorAll('th[data-sort]').forEach(th => {
     th.addEventListener('click', () => {
