@@ -40,8 +40,8 @@ let sortState = { column: null, direction: 'asc' };
 
 const statusColors = {
     "En transit": "bg-amber-100 text-amber-700",
-    "Livré": "bg-blue-100 text-blue-700",
-    "Récupéré": "bg-green-100 text-green-700"
+    "Livré": "bg-sky-100 text-sky-700",
+    "Récupéré": "bg-emerald-100 text-emerald-700"
 };
 
 // Ordre du cycle quand on clique sur le bouton "Changer Status"
@@ -140,13 +140,13 @@ function render() {
                     ${s.username}
                 </span>
             </td>
-            <td class="px-6 py-4 font-medium text-gray-900">${s.id}</td>
+            <td class="px-6 py-4 font-medium text-gray-900 font-mono-tag">${s.id}</td>
             <td class="px-6 py-4">${s.article}</td>
             <td class="px-6 py-4">
                 <div class="flex items-center gap-2">
                     <input type="number" value="${s.frais}"
                            onchange="updateFrais('${s.id}', this.value)"
-                           class="w-24 px-2 py-1 border border-gray-200 rounded focus:ring-2 focus:ring-indigo-500 outline-none text-sm font-medium">
+                           class="w-24 px-2 py-1 border border-gray-200 rounded focus:ring-2 focus:ring-amber-500 outline-none text-sm font-medium font-mono-tag">
                     <span class="text-xs text-gray-500">Ar</span>
                 </div>
             </td>
@@ -156,7 +156,7 @@ function render() {
                 </span>
             </td>
             <td class="px-6 py-4 text-right space-x-2">
-                <button onclick="toggleStatus('${s.id}')" class="text-indigo-600 hover:text-indigo-900 p-1" title="Changer Status">
+                <button onclick="toggleStatus('${s.id}')" class="text-amber-600 hover:text-amber-800 p-1" title="Changer Status">
                     <i class="fas fa-sync-alt"></i>
                 </button>
                 <button onclick="deleteShipment('${s.id}')" class="text-red-600 hover:text-red-900 p-1" title="Supprimer">
