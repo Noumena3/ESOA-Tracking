@@ -19,8 +19,10 @@ const addForm = document.getElementById('add-form');
 const statTotal = document.getElementById('stat-total');
 const statDelivered = document.getElementById('stat-delivered');
 const statTransit = document.getElementById('stat-transit');
+const statRecupere = document.getElementById('stat-recupere');
 const statTotalFrais = document.getElementById('stat-total-frais');
 const statFraisLivres = document.getElementById('stat-frais-livres');
+const statFraisRecupere = document.getElementById('stat-frais-recupere');
 const statFraisTransit = document.getElementById('stat-frais-transit');
 
 const loginOverlay = document.getElementById('login-overlay');
@@ -33,6 +35,15 @@ const userColors = {
     "Eric": "bg-purple-100 text-purple-700",
     "Mika": "bg-pink-100 text-pink-700"
 };
+
+const statusColors = {
+    "En transit": "bg-amber-100 text-amber-700",
+    "Livré": "bg-blue-100 text-blue-700",
+    "Récupéré": "bg-green-100 text-green-700"
+};
+
+// Ordre du cycle quand on clique sur le bouton "Changer Status"
+const statusCycle = ["En transit", "Livré", "Récupéré"];
 
 // Initialize app
 async function init() {
@@ -80,6 +91,7 @@ function render() {
 
     let totalFrais = 0;
     let fraisLivres = 0;
+    let fraisRecupere = 0;
     let fraisTransit = 0;
 
     filtered.forEach((s) => {
@@ -87,6 +99,8 @@ function render() {
         totalFrais += fraisVal;
         if (s.status === 'Livré') {
             fraisLivres += fraisVal;
+        } else if (s.status === 'Récupéré') {
+            fraisRecupere += fraisVal;
         } else {
             fraisTransit += fraisVal;
         }
@@ -110,7 +124,7 @@ function render() {
                 </div>
             </td>
             <td class="px-6 py-4">
-                <span class="px-2 py-1 rounded-full text-xs font-medium ${s.status === 'Livré' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}">
+                <span class="px-2 py-1 rounded-full text-xs font-medium ${statusColors[s.status] || 'bg-gray-100 text-gray-700'}">
                     ${s.status}
                 </span>
             </td>
@@ -128,9 +142,11 @@ function render() {
 
     statTotal.innerText = filtered.length;
     statDelivered.innerText = filtered.filter(s => s.status === "Livré").length;
-    statTransit.innerText = filtered.filter(s => s.status !== "Livré").length;
+    statTransit.innerText = filtered.filter(s => s.status === "En transit").length;
+    statRecupere.innerText = filtered.filter(s => s.status === "Récupéré").length;
     statTotalFrais.innerText = totalFrais.toLocaleString() + " Ar";
     statFraisLivres.innerText = fraisLivres.toLocaleString() + " Ar";
+    statFraisRecupere.innerText = fraisRecupere.toLocaleString() + " Ar";
     statFraisTransit.innerText = fraisTransit.toLocaleString() + " Ar";
 }
 
@@ -173,7 +189,9 @@ btnLogout.addEventListener('click', async () => {
 // --- Data Actions ---
 window.toggleStatus = async (id) => {
     const shipment = shipments.find(s => s.id === id);
-    const newStatus = shipment.status === "Livré" ? "En transit" : "Livré";
+    const currentIndex = statusCycle.indexOf(shipment.status);
+    // Si le status actuel n'est pas reconnu (ancienne donnée), on repart de "En transit"
+    const newStatus = statusCycle[(currentIndex + 1) % statusCycle.length] || statusCycle[0];
 
     try {
         const { error } = await supabaseClient
