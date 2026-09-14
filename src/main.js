@@ -4,6 +4,7 @@ const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_KEY;
 const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 let shipments = [];
+let selectedShipments = new Set();
 
 // Elements
 const tableBody = document.getElementById('tracking-table-body');
@@ -32,6 +33,14 @@ const loginForm = document.getElementById('login-form');
 const loginError = document.getElementById('login-error');
 const btnLogout = document.getElementById('btn-logout');
 
+// Batch Actions Elements
+const batchActionsBar = document.getElementById('batch-actions-bar');
+const batchCountSpan = document.getElementById('batch-count');
+const batchStatusSelect = document.getElementById('batch-status-select');
+const btnBatchStatus = document.getElementById('btn-batch-status');
+const btnBatchDelete = document.getElementById('btn-batch-delete');
+const selectAllCheckbox = document.getElementById('select-all');
+
 const userColors = {
     "Noumena": "bg-blue-100 text-blue-700",
     "Eric": "bg-purple-100 text-purple-700",
@@ -46,7 +55,21 @@ const statusColors = {
     "Récupéré": "bg-emerald-100 text-emerald-700"
 };
 
-const statusCycle = ["En transit", "Livré", "Récupéré"];
+async function logEvent(action, shipmentId, details = {}) {
+    try {
+        const { data: { user } } = await supabaseClient.auth.getUser();
+        const username = user?.user_metadata?.full_name || user?.email || 'Unknown';
+
+        await supabaseClient.from('audit_logs').insert([{
+            shipment_id: shipmentId,
+            action: action,
+            username: username,
+            details: details
+        }]);
+    } catch (e) {
+        console.error("Logging error:", e);
+    }
+}
 
 async function init() {
     try {
@@ -85,6 +108,28 @@ async function fetchShipments() {
     }
 }
 
+function updateBatchBar() {
+    const count = selectedShipments.size;
+    batchCountSpan.innerText = count;
+    if (count > 0) {
+        batchActionsBar.classList.remove('hidden');
+        batchActionsBar.classList.add('flex');
+    } else {
+        batchActionsBar.classList.add('hidden');
+        batchActionsBar.classList.remove('flex');
+    }
+}
+
+window.toggleSelection = (id) => {
+    if (selectedShipments.has(id)) {
+        selectedShipments.delete(id);
+    } else {
+        selectedShipments.add(id);
+    }
+    updateBatchBar();
+    render();
+};
+
 function render() {
     tableBody.innerHTML = "";
     const filterText = searchInput.value.toLowerCase();
@@ -99,12 +144,19 @@ function render() {
         return matchesText && matchesUser && matchesStatus;
     });
 
+    // Sync select-all checkbox
+    if (filtered.length > 0) {
+        selectAllCheckbox.checked = filtered.every(s => selectedShipments.has(s.id));
+    } else {
+        selectAllCheckbox.checked = false;
+    }
+
     let totalFrais = 0, fraisLivres = 0, fraisRecupere = 0, fraisTransit = 0;
 
     if (filtered.length === 0) {
         tableBody.innerHTML = `
             <tr>
-                <td colspan="6" class="px-6 py-12 text-center">
+                <td colspan="7" class="px-6 py-12 text-center">
                     <div class="flex flex-col items-center justify-center text-gray-400">
                         <i class="fas fa-box-open text-4xl mb-3"></i>
                         <p class="text-lg font-medium">Aucun article trouvé</p>
@@ -147,8 +199,13 @@ function render() {
 
             const userCol = userColors[s.username] || 'bg-gray-100 text-gray-700';
             const statusCol = statusColors[s.status] || 'bg-gray-100 text-gray-700';
+            const isSelected = selectedShipments.has(s.id) ? 'checked' : '';
 
             row.innerHTML = `
+                <td class="px-6 py-4 text-center">
+                    <input type="checkbox" ${isSelected} onchange="toggleSelection('${s.id}')"
+                           class="w-4 h-4 rounded border-gray-300 text-amber-600 focus:ring-amber-500">
+                </td>
                 <td class="px-6 py-4">
                     <span class="px-2 py-1 rounded-full text-xs font-medium ${userCol}">
                         ${s.username}
@@ -217,6 +274,8 @@ btnLogout.addEventListener('click', async () => {
         loginOverlay.classList.add('flex');
         appContent.classList.add('hidden');
         shipments = [];
+        selectedShipments.clear();
+        updateBatchBar();
         render();
     } catch (err) {
         alert("Erreur : " + err.message);
@@ -232,6 +291,7 @@ window.toggleStatus = async (id) => {
         loadingSpinner.classList.add('flex');
         const { error } = await supabaseClient.from('shipments').update({ status: newStatus }).eq('id', id);
         if (error) throw error;
+        await logEvent('STATUS_CHANGE', id, { old: shipment.status, new: newStatus });
         await fetchShipments();
     } catch (err) {
         alert("Erreur : " + err.message);
@@ -248,6 +308,9 @@ window.deleteShipment = async (id) => {
             loadingSpinner.classList.add('flex');
             const { error } = await supabaseClient.from('shipments').delete().eq('id', id);
             if (error) throw error;
+            await logEvent('DELETE', id);
+            selectedShipments.delete(id);
+            updateBatchBar();
             await fetchShipments();
         } catch (err) {
             alert("Erreur : " + err.message);
@@ -268,6 +331,7 @@ window.updateFrais = async (id, value) => {
     try {
         const { error } = await supabaseClient.from('shipments').update({ frais: newValue }).eq('id', id);
         if (error) throw error;
+        await logEvent('FRAIS_CHANGE', id, { newValue });
         await fetchShipments();
     } catch (err) {
         alert("Erreur : " + err.message);
@@ -350,12 +414,81 @@ addForm.addEventListener('submit', async (e) => {
         loadingSpinner.classList.add('flex');
         const { error } = await supabaseClient.from('shipments').insert([newShipment]);
         if (error) throw error;
+        await logEvent('CREATE', newShipment.id, { article: newShipment.article });
         await fetchShipments();
         addForm.reset();
         modalAdd.classList.add('hidden');
         modalAdd.classList.remove('flex');
     } catch (err) {
         alert("Erreur : " + err.message);
+    } finally {
+        loadingSpinner.classList.add('hidden');
+        loadingSpinner.classList.remove('flex');
+    }
+});
+
+// Batch Action Handlers
+selectAllCheckbox.addEventListener('change', (e) => {
+    const isChecked = e.target.checked;
+    const filtered = shipments.filter(s => {
+        const filterText = searchInput.value.toLowerCase();
+        const filterUser = userFilter.value;
+        const filterStatus = statusFilter.value;
+        const matchesText = (s.id && s.id.toLowerCase().includes(filterText)) ||
+                            (s.article && s.article.toLowerCase().includes(filterText));
+        const matchesUser = filterUser === "All" || s.username === filterUser;
+        const matchesStatus = filterStatus === "All" || s.status === filterStatus;
+        return matchesText && matchesUser && matchesStatus;
+    });
+
+    if (isChecked) {
+        filtered.forEach(s => selectedShipments.add(s.id));
+    } else {
+        filtered.forEach(s => selectedShipments.delete(s.id));
+    }
+    updateBatchBar();
+    render();
+});
+
+btnBatchStatus.addEventListener('click', async () => {
+    const newStatus = batchStatusSelect.value;
+    if (!confirm(`Changer le statut de ${selectedShipments.size} article(s) vers "${newStatus}" ?`)) return;
+
+    try {
+        loadingSpinner.classList.remove('hidden');
+        loadingSpinner.classList.add('flex');
+        for (const id of selectedShipments) {
+            await supabaseClient.from('shipments').update({ status: newStatus }).eq('id', id);
+            await logEvent('STATUS_CHANGE', id, { newStatus });
+        }
+        selectedShipments.clear();
+        updateBatchBar();
+        await fetchShipments();
+    } catch (err) {
+        alert("Erreur lors de la mise à jour groupée : " + err.message);
+    } finally {
+        loadingSpinner.classList.add('hidden');
+        loadingSpinner.classList.remove('flex');
+    }
+});
+
+btnBatchDelete.addEventListener('click', async () => {
+    if (!confirm(`Supprimer définitivement ${selectedShipments.size} article(s) ?`)) return;
+
+    try {
+        loadingSpinner.classList.remove('hidden');
+        loadingSpinner.classList.add('flex');
+        const idsToDelete = Array.from(selectedShipments);
+        const { error } = await supabaseClient.from('shipments').delete().in('id', idsToDelete);
+        if (error) throw error;
+        for (const id of idsToDelete) {
+            await logEvent('DELETE', id);
+        }
+        selectedShipments.clear();
+        updateBatchBar();
+        await fetchShipments();
+    } catch (err) {
+        alert("Erreur lors de la suppression groupée : " + err.message);
     } finally {
         loadingSpinner.classList.add('hidden');
         loadingSpinner.classList.remove('flex');
