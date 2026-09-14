@@ -99,6 +99,9 @@ function render() {
         return matchesText && matchesUser && matchesStatus;
     });
 
+    // Déclaration des totaux en dehors du bloc if/else pour éviter les erreurs de scope
+    let totalFrais = 0, fraisLivres = 0, fraisRecupere = 0, fraisTransit = 0;
+
     if (filtered.length === 0) {
         tableBody.innerHTML = `
             <tr>
@@ -132,8 +135,6 @@ function render() {
             const activeTh = document.querySelector(`th[data-sort="${sortState.column}"] .sort-arrow`);
             if (activeTh) activeTh.innerText = sortState.direction === 'asc' ? '▲' : '▼';
         }
-
-        let totalFrais = 0, fraisLivres = 0, fraisRecupere = 0, fraisTransit = 0;
 
         filtered.forEach((s) => {
             const fraisVal = parseInt(s.frais) || 0;
