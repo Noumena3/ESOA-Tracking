@@ -1,49 +1,51 @@
+import { Shipment } from './api';
+
 export const elements = {
-    tableBody: document.getElementById('tracking-table-body'),
-    searchInput: document.getElementById('search-input'),
-    userFilter: document.getElementById('user-filter'),
-    statusFilter: document.getElementById('status-filter'),
-    btnAdd: document.getElementById('btn-add'),
-    btnExport: document.getElementById('btn-export'),
-    modalAdd: document.getElementById('modal-add'),
-    btnCloseModal: document.getElementById('btn-close-modal'),
-    addForm: document.getElementById('add-form'),
-    loadingSpinner: document.getElementById('loading-spinner'),
-    statTotal: document.getElementById('stat-total'),
-    statDelivered: document.getElementById('stat-delivered'),
-    statTransit: document.getElementById('stat-transit'),
-    statRecupere: document.getElementById('stat-recupere'),
-    statTotalFrais: document.getElementById('stat-total-frais'),
-    statFraisLivres: document.getElementById('stat-frais-livres'),
-    statFraisRecupere: document.getElementById('stat-frais-recupere'),
-    statFraisTransit: document.getElementById('stat-frais-transit'),
-    loginOverlay: document.getElementById('login-overlay'),
-    appContent: document.getElementById('app-content'),
-    loginForm: document.getElementById('login-form'),
-    loginError: document.getElementById('login-error'),
-    btnLogout: document.getElementById('btn-logout'),
-    batchActionsBar: document.getElementById('batch-actions-bar'),
-    batchCountSpan: document.getElementById('batch-count'),
-    batchStatusSelect: document.getElementById('batch-status-select'),
-    btnBatchStatus: document.getElementById('btn-batch-status'),
-    btnBatchDelete: document.getElementById('btn-batch-delete'),
-    selectAllCheckbox: document.getElementById('select-all'),
-    btnThemeToggle: document.getElementById('btn-theme-toggle'),
+    tableBody: document.getElementById('tracking-table-body') as HTMLElement,
+    searchInput: document.getElementById('search-input') as HTMLInputElement,
+    userFilter: document.getElementById('user-filter') as HTMLSelectElement,
+    statusFilter: document.getElementById('status-filter') as HTMLSelectElement,
+    btnAdd: document.getElementById('btn-add') as HTMLButtonElement,
+    btnExport: document.getElementById('btn-export') as HTMLButtonElement,
+    modalAdd: document.getElementById('modal-add') as HTMLElement,
+    btnCloseModal: document.getElementById('btn-close-modal') as HTMLButtonElement,
+    addForm: document.getElementById('add-form') as HTMLFormElement,
+    loadingSpinner: document.getElementById('loading-spinner') as HTMLElement,
+    statTotal: document.getElementById('stat-total') as HTMLElement,
+    statDelivered: document.getElementById('stat-delivered') as HTMLElement,
+    statTransit: document.getElementById('stat-transit') as HTMLElement,
+    statRecupere: document.getElementById('stat-recupere') as HTMLElement,
+    statTotalFrais: document.getElementById('stat-total-frais') as HTMLElement,
+    statFraisLivres: document.getElementById('stat-frais-livres') as HTMLElement,
+    statFraisRecupere: document.getElementById('stat-frais-recupere') as HTMLElement,
+    statFraisTransit: document.getElementById('stat-frais-transit') as HTMLElement,
+    loginOverlay: document.getElementById('login-overlay') as HTMLElement,
+    appContent: document.getElementById('app-content') as HTMLElement,
+    loginForm: document.getElementById('login-form') as HTMLFormElement,
+    loginError: document.getElementById('login-error') as HTMLElement,
+    btnLogout: document.getElementById('btn-logout') as HTMLButtonElement,
+    batchActionsBar: document.getElementById('batch-actions-bar') as HTMLElement,
+    batchCountSpan: document.getElementById('batch-count') as HTMLElement,
+    batchStatusSelect: document.getElementById('batch-status-select') as HTMLSelectElement,
+    btnBatchStatus: document.getElementById('btn-batch-status') as HTMLButtonElement,
+    btnBatchDelete: document.getElementById('btn-batch-delete') as HTMLButtonElement,
+    selectAllCheckbox: document.getElementById('select-all') as HTMLInputElement,
+    btnThemeToggle: document.getElementById('btn-theme-toggle') as HTMLButtonElement,
 };
 
-const userColors = {
+const userColors: Record<string, string> = {
     "Noumena": "bg-blue-100 text-blue-700",
     "Eric": "bg-purple-100 text-purple-700",
     "Mika": "bg-pink-100 text-pink-700"
 };
 
-const statusColors = {
+const statusColors: Record<string, string> = {
     "En transit": "bg-amber-100 text-amber-700",
     "Livré": "bg-sky-100 text-sky-700",
     "Récupéré": "bg-emerald-100 text-emerald-700"
 };
 
-export function updateLoading(isLoading) {
+export function updateLoading(isLoading: boolean): void {
     if (isLoading) {
         elements.loadingSpinner.classList.remove('hidden');
         elements.loadingSpinner.classList.add('flex');
@@ -53,8 +55,8 @@ export function updateLoading(isLoading) {
     }
 }
 
-export function updateBatchBar(count) {
-    elements.batchCountSpan.innerText = count;
+export function updateBatchBar(count: number): void {
+    elements.batchCountSpan.innerText = count.toString();
     if (count > 0) {
         elements.batchActionsBar.classList.remove('hidden');
         elements.batchActionsBar.classList.add('flex');
@@ -64,7 +66,7 @@ export function updateBatchBar(count) {
     }
 }
 
-export function applyTheme() {
+export function applyTheme(): void {
     const theme = localStorage.getItem('theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
     if (theme === 'dark') {
         document.documentElement.classList.add('dark');
@@ -76,7 +78,15 @@ export function applyTheme() {
     localStorage.setItem('theme', theme);
 }
 
-export function render(shipments, selectedShipments, sortState, onToggleSelection, onToggleStatus, onDeleteShipment, onUpdateFrais) {
+export function render(
+    shipments: Shipment[],
+    selectedShipments: Set<string>,
+    sortState: { column: string | null, direction: 'asc' | 'desc' },
+    onToggleSelection: (id: string) => void,
+    onToggleStatus: (id: string) => void,
+    onDeleteShipment: (id: string) => void,
+    onUpdateFrais: (id: string, value: string) => void
+): void {
     const { tableBody, searchInput, userFilter, statusFilter, selectAllCheckbox } = elements;
     tableBody.innerHTML = "";
 
@@ -116,8 +126,8 @@ export function render(shipments, selectedShipments, sortState, onToggleSelectio
             const col = sortState.column;
             const dir = sortState.direction === 'asc' ? 1 : -1;
             filtered.sort((a, b) => {
-                let valA = a[col];
-                let valB = b[col];
+                let valA = (a as any)[col];
+                let valB = (b as any)[col];
                 if (col === 'frais') {
                     return ((parseInt(valA) || 0) - (parseInt(valB) || 0)) * dir;
                 }
@@ -127,10 +137,12 @@ export function render(shipments, selectedShipments, sortState, onToggleSelectio
             });
         }
 
-        document.querySelectorAll('th[data-sort] .sort-arrow').forEach(el => el.innerText = '');
+        document.querySelectorAll('th[data-sort] .sort-arrow').forEach(el => {
+            (el as HTMLElement).innerText = '';
+        });
         if (sortState.column) {
             const activeTh = document.querySelector(`th[data-sort="${sortState.column}"] .sort-arrow`);
-            if (activeTh) activeTh.innerText = sortState.direction === 'asc' ? '▲' : '▼';
+            if (activeTh) (activeTh as HTMLElement).innerText = sortState.direction === 'asc' ? '▲' : '▼';
         }
 
         filtered.forEach((s) => {
@@ -176,32 +188,31 @@ export function render(shipments, selectedShipments, sortState, onToggleSelectio
             tableBody.appendChild(row);
         });
 
-        // Attach event listeners to the newly created elements
         tableBody.querySelectorAll('.checkbox-selection').forEach(cb => {
-            cb.addEventListener('change', () => onToggleSelection(cb.dataset.id));
+            (cb as HTMLInputElement).addEventListener('change', () => onToggleSelection((cb as HTMLInputElement).dataset.id));
         });
         tableBody.querySelectorAll('.frais-input').forEach(input => {
-            input.addEventListener('change', (e) => onUpdateFrais(input.dataset.id, e.target.value));
+            (input as HTMLInputElement).addEventListener('change', (e) => onUpdateFrais((input as HTMLInputElement).dataset.id, (e.target as HTMLInputElement).value));
         });
         tableBody.querySelectorAll('.btn-toggle-status').forEach(btn => {
-            btn.addEventListener('click', () => onToggleStatus(btn.dataset.id));
+            (btn as HTMLElement).addEventListener('click', () => onToggleStatus((btn as HTMLElement).dataset.id));
         });
         tableBody.querySelectorAll('.btn-delete-shipment').forEach(btn => {
-            btn.addEventListener('click', () => onDeleteShipment(btn.dataset.id));
+            (btn as HTMLElement).addEventListener('click', () => onDeleteShipment((btn as HTMLElement).dataset.id));
         });
     }
 
-    elements.statTotal.innerText = filtered.length;
-    elements.statDelivered.innerText = filtered.filter(s => s.status === "Livré").length;
-    elements.statTransit.innerText = filtered.filter(s => s.status === "En transit").length;
-    elements.statRecupere.innerText = filtered.filter(s => s.status === "Récupéré").length;
+    elements.statTotal.innerText = filtered.length.toString();
+    elements.statDelivered.innerText = filtered.filter(s => s.status === "Livré").length.toString();
+    elements.statTransit.innerText = filtered.filter(s => s.status === "En transit").length.toString();
+    elements.statRecupere.innerText = filtered.filter(s => s.status === "Récupéré").length.toString();
     elements.statTotalFrais.innerText = totalFrais.toLocaleString() + " Ar";
     elements.statFraisLivres.innerText = fraisLivres.toLocaleString() + " Ar";
     elements.statFraisRecupere.innerText = fraisRecupere.toLocaleString() + " Ar";
     elements.statFraisTransit.innerText = fraisTransit.toLocaleString() + " Ar";
 }
 
-export function exportToCSV(shipments) {
+export function exportToCSV(shipments: Shipment[]): void {
     if (shipments.length === 0) {
         alert("Aucune donnée à exporter.");
         return;

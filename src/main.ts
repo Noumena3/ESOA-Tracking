@@ -1,24 +1,25 @@
-import * as api from './api.js';
-import * as auth from './auth.js';
-import { elements, render, updateBatchBar, applyTheme, updateLoading, exportToCSV } from './ui.js';
+import * as api from './api';
+import * as auth from './auth';
+import { elements, render, updateBatchBar, applyTheme, updateLoading, exportToCSV } from './ui';
+import { Shipment } from './api';
 
-let shipments = [];
-let selectedShipments = new Set();
-let sortState = { column: null, direction: 'asc' };
+let shipments: Shipment[] = [];
+let selectedShipments = new Set<string>();
+let sortState = { column: null as string | null, direction: 'asc' as 'asc' | 'desc' };
 
-async function refreshData() {
+async function refreshData(): Promise<void> {
     try {
         updateLoading(true);
         shipments = await api.getShipments();
         render(shipments, selectedShipments, sortState, handleToggleSelection, handleToggleStatus, handleDeleteShipment, handleUpdateFrais);
-    } catch (err) {
+    } catch (err: any) {
         alert("Erreur de connexion : " + err.message);
     } finally {
         updateLoading(false);
     }
 }
 
-function handleToggleSelection(id) {
+function handleToggleSelection(id: string): void {
     if (selectedShipments.has(id)) {
         selectedShipments.delete(id);
     } else {
@@ -28,8 +29,10 @@ function handleToggleSelection(id) {
     render(shipments, selectedShipments, sortState, handleToggleSelection, handleToggleStatus, handleDeleteShipment, handleUpdateFrais);
 }
 
-async function handleToggleStatus(id) {
+async function handleToggleStatus(id: string): Promise<void> {
     const shipment = shipments.find(s => s.id === id);
+    if (!shipment) return;
+
     const statusCycle = ["En transit", "Livré", "Récupéré"];
     const currentIndex = statusCycle.indexOf(shipment.status);
     const newStatus = statusCycle[(currentIndex + 1) % statusCycle.length] || statusCycle[0];
@@ -39,14 +42,14 @@ async function handleToggleStatus(id) {
         await api.updateShipment(id, { status: newStatus });
         await api.logEvent('STATUS_CHANGE', id, { old: shipment.status, new: newStatus });
         await refreshData();
-    } catch (err) {
+    } catch (err: any) {
         alert("Erreur : " + err.message);
     } finally {
         updateLoading(false);
     }
 }
 
-async function handleDeleteShipment(id) {
+async function handleDeleteShipment(id: string): Promise<void> {
     if (confirm("Supprimer cet article ?")) {
         try {
             updateLoading(true);
@@ -55,7 +58,7 @@ async function handleDeleteShipment(id) {
             selectedShipments.delete(id);
             updateBatchBar(selectedShipments.size);
             await refreshData();
-        } catch (err) {
+        } catch (err: any) {
             alert("Erreur : " + err.message);
         } finally {
             updateLoading(false);
@@ -63,7 +66,7 @@ async function handleDeleteShipment(id) {
     }
 }
 
-async function handleUpdateFrais(id, value) {
+async function handleUpdateFrais(id: string, value: string): Promise<void> {
     const newValue = parseInt(value) || 0;
     if (newValue < 0) {
         alert("Les frais ne peuvent pas être négatifs.");
@@ -74,12 +77,12 @@ async function handleUpdateFrais(id, value) {
         await api.updateShipment(id, { frais: newValue });
         await api.logEvent('FRAIS_CHANGE', id, { newValue });
         await refreshData();
-    } catch (err) {
+    } catch (err: any) {
         alert("Erreur : " + err.message);
     }
 }
 
-async function init() {
+async function init(): Promise<void> {
     applyTheme();
     try {
         const session = await auth.getSession();
@@ -93,7 +96,7 @@ async function init() {
             elements.loginOverlay.classList.add('flex');
             elements.appContent.classList.add('hidden');
         }
-    } catch (e) {
+    } catch (e: any) {
         console.error("Init error:", e);
     }
 }
@@ -101,8 +104,8 @@ async function init() {
 // Event Listeners
 elements.loginForm.addEventListener('submit', async (e) => {
     e.preventDefault();
-    const email = document.getElementById('login-email').value;
-    const password = document.getElementById('login-password').value;
+    const email = (document.getElementById('login-email') as HTMLInputElement).value;
+    const password = (document.getElementById('login-password') as HTMLInputElement).value;
     elements.loginError.classList.add('hidden');
     try {
         await auth.signIn(email, password);
@@ -110,7 +113,7 @@ elements.loginForm.addEventListener('submit', async (e) => {
         elements.loginOverlay.classList.remove('flex');
         elements.appContent.classList.remove('hidden');
         await refreshData();
-    } catch (err) {
+    } catch (err: any) {
         elements.loginError.innerText = err.message;
         elements.loginError.classList.remove('hidden');
     }
@@ -126,7 +129,7 @@ elements.btnLogout.addEventListener('click', async () => {
         selectedShipments.clear();
         updateBatchBar(0);
         render(shipments, selectedShipments, sortState, handleToggleSelection, handleToggleStatus, handleDeleteShipment, handleUpdateFrais);
-    } catch (err) {
+    } catch (err: any) {
         alert("Erreur : " + err.message);
     }
 });
@@ -145,17 +148,17 @@ elements.btnCloseModal.addEventListener('click', () => {
 
 elements.addForm.addEventListener('submit', async (e) => {
     e.preventDefault();
-    const fraisValue = parseInt(document.getElementById('form-frais').value) || 0;
+    const fraisValue = parseInt((document.getElementById('form-frais') as HTMLInputElement).value) || 0;
     if (fraisValue < 0) {
         alert("Les frais ne peuvent pas être négatifs.");
         return;
     }
-    const newShipment = {
-        username: document.getElementById('form-user').value,
-        id: document.getElementById('form-id').value,
-        article: document.getElementById('form-article').value,
+    const newShipment: Omit<Shipment, 'created_at'> = {
+        username: (document.getElementById('form-user') as HTMLSelectElement).value,
+        id: (document.getElementById('form-id') as HTMLInputElement).value,
+        article: (document.getElementById('form-article') as HTMLInputElement).value,
         frais: fraisValue,
-        status: document.getElementById('form-status').value,
+        status: (document.getElementById('form-status') as HTMLSelectElement).value,
     };
     try {
         updateLoading(true);
@@ -165,7 +168,7 @@ elements.addForm.addEventListener('submit', async (e) => {
         elements.addForm.reset();
         elements.modalAdd.classList.add('hidden');
         elements.modalAdd.classList.remove('flex');
-    } catch (err) {
+    } catch (err: any) {
         alert("Erreur : " + err.message);
     } finally {
         updateLoading(false);
@@ -186,7 +189,7 @@ document.querySelectorAll('th[data-sort]').forEach(th => {
 });
 
 elements.selectAllCheckbox.addEventListener('change', (e) => {
-    const isChecked = e.target.checked;
+    const isChecked = (e.target as HTMLInputElement).checked;
     const filterText = elements.searchInput.value.toLowerCase();
     const filterUser = elements.userFilter.value;
     const filterStatus = elements.statusFilter.value;
@@ -221,7 +224,7 @@ elements.btnBatchStatus.addEventListener('click', async () => {
         selectedShipments.clear();
         updateBatchBar(0);
         await refreshData();
-    } catch (err) {
+    } catch (err: any) {
         alert("Erreur lors de la mise à jour groupée : " + err.message);
     } finally {
         updateLoading(false);
@@ -241,7 +244,7 @@ elements.btnBatchDelete.addEventListener('click', async () => {
         selectedShipments.clear();
         updateBatchBar(0);
         await refreshData();
-    } catch (err) {
+    } catch (err: any) {
         alert("Erreur lors de la suppression groupée : " + err.message);
     } finally {
         updateLoading(false);
