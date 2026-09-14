@@ -27,26 +27,26 @@ document.getElementById('chat-bubble')?.addEventListener('click', function() {
   window.open(url, 'chatWindow', 'width=400,height=600,resizable=yes,scrollbars=yes');
 });
 </script>
-<body class="min-h-screen">
+<body class="min-h-screen bg-[#FAF8F3] dark:bg-slate-950 transition-colors duration-300">
 
     <!-- Login Overlay -->
     <div id="login-overlay" class="fixed inset-0 bg-slate-900 z-[100] hidden items-center justify-center p-4 transition-all duration-500">
-        <div class="bg-white rounded-2xl max-w-md w-full p-8 shadow-2xl transform transition-all">
+        <div class="bg-white dark:bg-slate-800 rounded-2xl max-w-md w-full p-8 shadow-2xl transform transition-all">
             <div class="text-center mb-8">
                 <div class="bg-amber-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
                     <i class="fas fa-lock text-amber-700 text-2xl"></i>
                 </div>
-                <h2 class="text-2xl font-bold text-gray-900">Accès Sécurisé</h2>
-                <p class="text-gray-500 text-sm mt-2">Veuillez vous connecter pour accéder au suivi ESOA</p>
+                <h2 class="text-2xl font-bold text-gray-900 dark:text-white">Accès Sécurisé</h2>
+                <p class="text-gray-500 dark:text-gray-400 text-sm mt-2">Veuillez vous connecter pour accéder au suivi ESOA</p>
             </div>
             <form id="login-form" class="space-y-4">
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
-                    <input type="email" id="login-email" required class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-amber-500 outline-none">
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Email</label>
+                    <input type="email" id="login-email" required class="w-full px-4 py-2 border border-gray-200 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-amber-500 outline-none">
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Mot de passe</label>
-                    <input type="password" id="login-password" required class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-amber-500 outline-none">
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Mot de passe</label>
+                    <input type="password" id="login-password" required class="w-full px-4 py-2 border border-gray-200 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-amber-500 outline-none">
                 </div>
                 <button type="submit" class="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-3 rounded-lg transition-all shadow-lg shadow-slate-200">
                     Se connecter
@@ -67,6 +67,9 @@ document.getElementById('chat-bubble')?.addEventListener('click', function() {
                         <span class="text-xl font-bold tracking-tight">Suivi ESOA</span>
                     </div>
                     <div class="flex items-center gap-3">
+                        <button id="btn-theme-toggle" class="bg-slate-800 hover:bg-slate-700 text-white px-3 py-2 rounded-lg transition-all flex items-center gap-2 text-sm font-medium border border-slate-600">
+                            <i class="fas fa-moon"></i> <span class="hidden sm:inline">Mode Sombre</span>
+                        </button>
                         <button id="btn-logout" class="bg-slate-800 hover:bg-slate-700 text-white px-3 py-2 rounded-lg transition-all flex items-center gap-2 text-sm font-medium border border-slate-600">
                             <i class="fas fa-sign-out-alt"></i> <span class="hidden sm:inline">Déconnexion</span>
                         </button>
@@ -106,73 +109,73 @@ document.getElementById('chat-bubble')?.addEventListener('click', function() {
 
             <!-- Summary Cards -->
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-                <div class="bg-white p-4 rounded-lg border border-gray-200 border-l-4 border-l-slate-700">
+                <div class="bg-white dark:bg-slate-800 p-4 rounded-lg border border-gray-200 dark:border-slate-600 dark:border-slate-700 border-l-4 border-l-slate-700">
                     <div class="flex items-center justify-between">
                         <div>
-                            <p class="text-xs text-gray-500 font-medium">Total Articles</p>
-                            <h3 id="stat-total" class="text-2xl font-bold text-gray-900 font-mono-tag">0</h3>
+                            <p class="text-xs text-gray-500 dark:text-gray-400 font-medium">Total Articles</p>
+                            <h3 id="stat-total" class="text-2xl font-bold text-gray-900 dark:text-white font-mono-tag">0</h3>
                         </div>
                         <i class="fas fa-list-ul text-slate-400"></i>
                     </div>
                 </div>
-                <div class="bg-white p-4 rounded-lg border border-gray-200 border-l-4 border-l-sky-500">
+                <div class="bg-white dark:bg-slate-800 p-4 rounded-lg border border-gray-200 dark:border-slate-600 dark:border-slate-700 border-l-4 border-l-sky-500">
                     <div class="flex items-center justify-between">
                         <div>
-                            <p class="text-xs text-gray-500 font-medium">Livrés</p>
+                            <p class="text-xs text-gray-500 dark:text-gray-400 font-medium">Livrés</p>
                             <h3 id="stat-delivered" class="text-2xl font-bold text-sky-600 font-mono-tag">0</h3>
                         </div>
                         <i class="fas fa-check-circle text-sky-400"></i>
                     </div>
                 </div>
-                <div class="bg-white p-4 rounded-lg border border-gray-200 border-l-4 border-l-amber-500">
+                <div class="bg-white dark:bg-slate-800 p-4 rounded-lg border border-gray-200 dark:border-slate-600 dark:border-slate-700 border-l-4 border-l-amber-500">
                     <div class="flex items-center justify-between">
                         <div>
-                            <p class="text-xs text-gray-500 font-medium">En Transit</p>
+                            <p class="text-xs text-gray-500 dark:text-gray-400 font-medium">En Transit</p>
                             <h3 id="stat-transit" class="text-2xl font-bold text-amber-600 font-mono-tag">0</h3>
                         </div>
                         <i class="fas fa-truck text-amber-400"></i>
                     </div>
                 </div>
-                <div class="bg-white p-4 rounded-lg border border-gray-200 border-l-4 border-l-emerald-500">
+                <div class="bg-white dark:bg-slate-800 p-4 rounded-lg border border-gray-200 dark:border-slate-600 dark:border-slate-700 border-l-4 border-l-emerald-500">
                     <div class="flex items-center justify-between">
                         <div>
-                            <p class="text-xs text-gray-500 font-medium">Récupérés</p>
+                            <p class="text-xs text-gray-500 dark:text-gray-400 font-medium">Récupérés</p>
                             <h3 id="stat-recupere" class="text-2xl font-bold text-emerald-600 font-mono-tag">0</h3>
                         </div>
                         <i class="fas fa-warehouse text-emerald-400"></i>
                     </div>
                 </div>
-                <div class="bg-white p-4 rounded-lg border border-gray-200 border-l-4 border-l-slate-700">
+                <div class="bg-white dark:bg-slate-800 p-4 rounded-lg border border-gray-200 dark:border-slate-600 dark:border-slate-700 border-l-4 border-l-slate-700">
                     <div class="flex items-center justify-between">
                         <div>
-                            <p class="text-xs text-gray-500 font-medium">Total Frais</p>
+                            <p class="text-xs text-gray-500 dark:text-gray-400 font-medium">Total Frais</p>
                             <h3 id="stat-total-frais" class="text-2xl font-bold text-slate-800 font-mono-tag">0 Ar</h3>
                         </div>
                         <i class="fas fa-coins text-slate-400"></i>
                     </div>
                 </div>
-                <div class="bg-white p-4 rounded-lg border border-gray-200 border-l-4 border-l-sky-500">
+                <div class="bg-white dark:bg-slate-800 p-4 rounded-lg border border-gray-200 dark:border-slate-600 dark:border-slate-700 border-l-4 border-l-sky-500">
                     <div class="flex items-center justify-between">
                         <div>
-                            <p class="text-xs text-gray-500 font-medium">Frais Livrés</p>
+                            <p class="text-xs text-gray-500 dark:text-gray-400 font-medium">Frais Livrés</p>
                             <h3 id="stat-frais-livres" class="text-2xl font-bold text-sky-600 font-mono-tag">0 Ar</h3>
                         </div>
                         <i class="fas fa-hand-holding-usd text-sky-400"></i>
                     </div>
                 </div>
-                <div class="bg-white p-4 rounded-lg border border-gray-200 border-l-4 border-l-emerald-500">
+                <div class="bg-white dark:bg-slate-800 p-4 rounded-lg border border-gray-200 dark:border-slate-600 dark:border-slate-700 border-l-4 border-l-emerald-500">
                     <div class="flex items-center justify-between">
                         <div>
-                            <p class="text-xs text-gray-500 font-medium">Frais Récupérés</p>
+                            <p class="text-xs text-gray-500 dark:text-gray-400 font-medium">Frais Récupérés</p>
                             <h3 id="stat-frais-recupere" class="text-2xl font-bold text-emerald-600 font-mono-tag">0 Ar</h3>
                         </div>
                         <i class="fas fa-hand-holding-usd text-emerald-400"></i>
                     </div>
                 </div>
-                <div class="bg-white p-4 rounded-lg border border-gray-200 border-l-4 border-l-amber-500">
+                <div class="bg-white dark:bg-slate-800 p-4 rounded-lg border border-gray-200 dark:border-slate-600 dark:border-slate-700 border-l-4 border-l-amber-500">
                     <div class="flex items-center justify-between">
                         <div>
-                            <p class="text-xs text-gray-500 font-medium">Frais Transit</p>
+                            <p class="text-xs text-gray-500 dark:text-gray-400 font-medium">Frais Transit</p>
                             <h3 id="stat-frais-transit" class="text-2xl font-bold text-amber-600 font-mono-tag">0 Ar</h3>
                         </div>
                         <i class="fas fa-truck-fast text-amber-400"></i>
@@ -181,13 +184,13 @@ document.getElementById('chat-bubble')?.addEventListener('click', function() {
             </div>
 
             <!-- Search and Table Section -->
-            <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-                <div class="p-6 border-b border-gray-100 flex flex-col lg:flex-row justify-between items-center gap-4">
+            <div class="bg-white dark:bg-slate-800 rounded-lg shadow-sm border border-gray-200 dark:border-slate-600 dark:border-slate-700 overflow-hidden">
+                <div class="p-6 border-b border-gray-100 dark:border-slate-700 dark:border-slate-700 flex flex-col lg:flex-row justify-between items-center gap-4">
                     <h2 class="text-lg font-semibold text-gray-800">Liste des expéditions</h2>
                     <div class="flex flex-col sm:flex-row items-center gap-4 w-full lg:w-auto">
                         <div class="relative w-full sm:w-48">
                             <i class="fas fa-user absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
-                            <select id="user-filter" class="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 transition-all text-sm appearance-none bg-white">
+                            <select id="user-filter" class="w-full pl-10 pr-4 py-2 border border-gray-200 dark:border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 transition-all text-sm appearance-none bg-white dark:bg-slate-700 dark:text-white">
                                 <option value="All">Tous les utilisateurs</option>
                                 <option value="Noumena">Noumena</option>
                                 <option value="Eric">Eric</option>
@@ -196,7 +199,7 @@ document.getElementById('chat-bubble')?.addEventListener('click', function() {
                         </div>
                         <div class="relative w-full sm:w-48">
                             <i class="fas fa-filter absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
-                            <select id="status-filter" class="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 transition-all text-sm appearance-none bg-white">
+                            <select id="status-filter" class="w-full pl-10 pr-4 py-2 border border-gray-200 dark:border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 transition-all text-sm appearance-none bg-white dark:bg-slate-700 dark:text-white">
                                 <option value="All">Tous les statuts</option>
                                 <option value="En transit">En transit</option>
                                 <option value="Livré">Livré</option>
@@ -206,7 +209,7 @@ document.getElementById('chat-bubble')?.addEventListener('click', function() {
                         <div class="relative w-full sm:w-72">
                             <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
                             <input type="text" id="search-input" placeholder="Rechercher ID ou article..."
-                                   class="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 transition-all text-sm">
+                                   class="w-full pl-10 pr-4 py-2 border border-gray-200 dark:border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 transition-all text-sm bg-white dark:bg-slate-700 dark:text-white">
                         </div>
                     </div>
                 </div>
@@ -218,17 +221,17 @@ document.getElementById('chat-bubble')?.addEventListener('click', function() {
                     </div>
 
                     <table class="w-full text-left border-collapse">
-                        <thead class="bg-gray-50 text-gray-600 text-xs uppercase font-semibold">
-                            <tr class="hover:bg-gray-100">
-                                <th class="px-6 py-4 border-b border-gray-100 text-center w-12">
+                        <thead class="bg-gray-50 dark:bg-slate-700 text-gray-600 dark:text-gray-300 text-xs uppercase font-semibold">
+                            <tr class="hover:bg-gray-100 dark:hover:bg-slate-600">
+                                <th class="px-6 py-4 border-b border-gray-100 dark:border-slate-700 text-center w-12">
                                     <input type="checkbox" id="select-all" class="w-4 h-4 rounded border-gray-300 text-amber-600 focus:ring-amber-500">
                                 </th>
-                                <th data-sort="username" class="px-6 py-4 border-b border-gray-100 cursor-pointer select-none hover:text-amber-700">Utilisateur <span class="sort-arrow"></span></th>
-                                <th data-sort="id" class="px-6 py-4 border-b border-gray-100 cursor-pointer select-none hover:text-amber-700">ID Tracking <span class="sort-arrow"></span></th>
-                                <th data-sort="article" class="px-6 py-4 border-b border-gray-100 cursor-pointer select-none hover:text-amber-700">Article <span class="sort-arrow"></span></th>
-                                <th data-sort="frais" class="px-6 py-4 border-b border-gray-100 cursor-pointer select-none hover:text-amber-700">Frais Transit <span class="sort-arrow"></span></th>
-                                <th data-sort="status" class="px-6 py-4 border-b border-gray-100 cursor-pointer select-none hover:text-amber-700">Status <span class="sort-arrow"></span></th>
-                                <th class="px-6 py-4 border-b border-gray-100 text-right">Actions</th>
+                                <th data-sort="username" class="px-6 py-4 border-b border-gray-100 dark:border-slate-700 cursor-pointer select-none hover:text-amber-700">Utilisateur <span class="sort-arrow"></span></th>
+                                <th data-sort="id" class="px-6 py-4 border-b border-gray-100 dark:border-slate-700 cursor-pointer select-none hover:text-amber-700">ID Tracking <span class="sort-arrow"></span></th>
+                                <th data-sort="article" class="px-6 py-4 border-b border-gray-100 dark:border-slate-700 cursor-pointer select-none hover:text-amber-700">Article <span class="sort-arrow"></span></th>
+                                <th data-sort="frais" class="px-6 py-4 border-b border-gray-100 dark:border-slate-700 cursor-pointer select-none hover:text-amber-700">Frais Transit <span class="sort-arrow"></span></th>
+                                <th data-sort="status" class="px-6 py-4 border-b border-gray-100 dark:border-slate-700 cursor-pointer select-none hover:text-amber-700">Status <span class="sort-arrow"></span></th>
+                                <th class="px-6 py-4 border-b border-gray-100 dark:border-slate-700 text-right">Actions</th>
                             </tr>
                         </thead>
                         <tbody id="tracking-table-body" class="text-sm text-gray-700 divide-y divide-gray-100">
@@ -242,37 +245,37 @@ document.getElementById('chat-bubble')?.addEventListener('click', function() {
 
     <!-- Modal Form -->
     <div id="modal-add" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50 p-4">
-        <div class="bg-white rounded-2xl max-w-md w-full p-8 shadow-2xl transform transition-all">
+        <div class="bg-white dark:bg-slate-800 rounded-2xl max-w-md w-full p-8 shadow-2xl transform transition-all">
             <div class="flex justify-between items-center mb-6">
-                <h3 class="text-xl font-bold text-gray-900">Nouvel Article</h3>
+                <h3 class="text-xl font-bold text-gray-900 dark:text-white">Nouvel Article</h3>
                 <button id="btn-close-modal" class="text-gray-400 hover:text-gray-600">
                     <i class="fas fa-times text-xl"></i>
                 </button>
             </div>
             <form id="add-form" class="space-y-4">
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Utilisateur</label>
-                    <select id="form-user" required class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-amber-500 outline-none">
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Utilisateur</label>
+                    <select id="form-user" required class="w-full px-4 py-2 border border-gray-200 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-amber-500 outline-none">
                         <option value="Noumena">Noumena</option>
                         <option value="Eric">Eric</option>
                         <option value="Mika">Mika</option>
                     </select>
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">ID Tracking</label>
-                    <input type="text" id="form-id" required class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-amber-500 outline-none">
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">ID Tracking</label>
+                    <input type="text" id="form-id" required class="w-full px-4 py-2 border border-gray-200 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-amber-500 outline-none">
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Article</label>
-                    <input type="text" id="form-article" required class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-amber-500 outline-none">
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Article</label>
+                    <input type="text" id="form-article" required class="w-full px-4 py-2 border border-gray-200 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-amber-500 outline-none">
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Frais Transit</label>
-                    <input type="number" id="form-frais" required min="0" class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-amber-500 outline-none">
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Frais Transit</label>
+                    <input type="number" id="form-frais" required min="0" class="w-full px-4 py-2 border border-gray-200 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-amber-500 outline-none">
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
-                    <select id="form-status" class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-amber-500 outline-none">
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Status</label>
+                    <select id="form-status" class="w-full px-4 py-2 border border-gray-200 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-amber-500 outline-none">
                         <option value="En transit">En transit</option>
                         <option value="Livré">Livré</option>
                         <option value="Récupéré">Récupéré</option>

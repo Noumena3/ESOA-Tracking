@@ -41,6 +41,9 @@ const btnBatchStatus = document.getElementById('btn-batch-status');
 const btnBatchDelete = document.getElementById('btn-batch-delete');
 const selectAllCheckbox = document.getElementById('select-all');
 
+// Theme Elements
+const btnThemeToggle = document.getElementById('btn-theme-toggle');
+
 const userColors = {
     "Noumena": "bg-blue-100 text-blue-700",
     "Eric": "bg-purple-100 text-purple-700",
@@ -71,7 +74,27 @@ async function logEvent(action, shipmentId, details = {}) {
     }
 }
 
+function applyTheme() {
+    const theme = localStorage.getItem('theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+    if (theme === 'dark') {
+        document.documentElement.classList.add('dark');
+        btnThemeToggle.innerHTML = '<i class="fas fa-sun"></i> <span class="hidden sm:inline">Mode Clair</span>';
+    } else {
+        document.documentElement.classList.remove('dark');
+        btnThemeToggle.innerHTML = '<i class="fas fa-moon"></i> <span class="hidden sm:inline">Mode Sombre</span>';
+    }
+    localStorage.setItem('theme', theme);
+}
+
+btnThemeToggle.addEventListener('click', () => {
+    const isDark = document.documentElement.classList.contains('dark');
+    const newTheme = isDark ? 'light' : 'dark';
+    localStorage.setItem('theme', newTheme);
+    applyTheme();
+});
+
 async function init() {
+    applyTheme();
     try {
         const { data: { session } } = await supabaseClient.auth.getSession();
         if (session) {
