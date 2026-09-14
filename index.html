@@ -67,13 +67,13 @@ document.getElementById('chat-bubble').addEventListener('click', function() {
                 </div>
                 <div class="flex items-center gap-3">
                     <button id="btn-logout" class="bg-slate-800 hover:bg-slate-700 text-white px-3 py-2 rounded-lg transition-all flex items-center gap-2 text-sm font-medium border border-slate-600">
-                        <i class="fas fa-sign-out-alt"></i> Déconnexion
+                        <i class="fas fa-sign-out-alt"></i> <span class="hidden sm:inline">Déconnexion</span>
                     </button>
                     <button id="btn-export" class="bg-slate-800 hover:bg-slate-700 text-white px-3 py-2 rounded-lg transition-all flex items-center gap-2 text-sm font-medium border border-slate-600">
-                        <i class="fas fa-download"></i> Export
+                        <i class="fas fa-download"></i> <span class="hidden sm:inline">Export</span>
                     </button>
                     <button id="btn-add" class="bg-amber-500 text-slate-900 hover:bg-amber-400 px-4 py-2 rounded-lg transition-all flex items-center gap-2 text-sm font-bold">
-                        <i class="fas fa-plus"></i> Ajouter un article
+                        <i class="fas fa-plus"></i> <span class="hidden sm:inline">Ajouter un article</span>
                     </button>
                 </div>
             </div>
@@ -83,7 +83,7 @@ document.getElementById('chat-bubble').addEventListener('click', function() {
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
 
         <!-- Summary Cards -->
-        <div class="grid grid-cols-3 gap-4 mb-8">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
             <div class="bg-white p-4 rounded-lg border border-gray-200 border-l-4 border-l-slate-700">
                 <div class="flex items-center justify-between">
                     <div>
