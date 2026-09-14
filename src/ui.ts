@@ -165,7 +165,7 @@ export function render(
                 <td class="px-6 py-4">
                     <span class="px-2 py-1 rounded-full text-xs font-medium ${userCol}">${s.username}</span>
                 </td>
-                <td class="px-6 py-4 font-medium text-gray-900 font-mono-tag">${s.id}</td>
+                <td class="px-6 py-4 font-medium text-gray-900 dark:text-white font-mono-tag">${s.id}</td>
                 <td class="px-6 py-4">${s.article}</td>
                 <td class="px-6 py-4">
                     <div class="flex items-center gap-2">
