@@ -25,6 +25,7 @@ const statFraisRecupere = document.getElementById('stat-frais-recupere');
 const statFraisTransit = document.getElementById('stat-frais-transit');
 
 const loginOverlay = document.getElementById('login-overlay');
+const appContent = document.getElementById('app-content');
 const loginForm = document.getElementById('login-form');
 const loginError = document.getElementById('login-error');
 const btnLogout = document.getElementById('btn-logout');
@@ -51,10 +52,12 @@ async function init() {
         if (session) {
             loginOverlay.classList.add('hidden');
             loginOverlay.classList.remove('flex');
+            appContent.classList.remove('hidden');
             await fetchShipments();
         } else {
             loginOverlay.classList.remove('hidden');
             loginOverlay.classList.add('flex');
+            appContent.classList.add('hidden');
         }
     } catch (e) {
         console.error("Init error:", e);
@@ -176,6 +179,7 @@ loginForm.addEventListener('submit', async (e) => {
         if (error) throw error;
         loginOverlay.classList.add('hidden');
         loginOverlay.classList.remove('flex');
+        appContent.classList.remove('hidden');
         await fetchShipments();
     } catch (err) {
         loginError.innerText = err.message;
@@ -188,6 +192,7 @@ btnLogout.addEventListener('click', async () => {
         await supabaseClient.auth.signOut();
         loginOverlay.classList.remove('hidden');
         loginOverlay.classList.add('flex');
+        appContent.classList.add('hidden');
         shipments = [];
         render();
     } catch (err) {
