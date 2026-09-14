@@ -99,7 +99,6 @@ function render() {
         return matchesText && matchesUser && matchesStatus;
     });
 
-    // Déclaration des totaux en dehors du bloc if/else pour éviter les erreurs de scope
     let totalFrais = 0, fraisLivres = 0, fraisRecupere = 0, fraisTransit = 0;
 
     if (filtered.length === 0) {
@@ -275,13 +274,33 @@ window.updateFrais = async (id, value) => {
     }
 };
 
-function exportData() {
-    const dataStr = JSON.stringify(shipments, null, 2);
-    const dataBlob = new Blob([dataStr], { type: 'application/json' });
-    const url = URL.createObjectURL(dataBlob);
+function exportToCSV() {
+    if (shipments.length === 0) {
+        alert("Aucune donnée à exporter.");
+        return;
+    }
+
+    const headers = ["Utilisateur", "ID Tracking", "Article", "Frais Transit", "Status"];
+    const csvRows = [];
+    csvRows.push(headers.join(","));
+
+    for (const s of shipments) {
+        const row = [
+            `"${s.username}"`,
+            `"${s.id}"`,
+            `"${s.article}"`,
+            s.frais,
+            `"${s.status}"`
+        ];
+        csvRows.push(row.join(","));
+    }
+
+    const csvString = csvRows.join("\n");
+    const csvBlob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(csvBlob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `esoa_backup_${new Date().toISOString().slice(0,10)}.json`;
+    link.download = `export_esoa_${new Date().toISOString().slice(0,10)}.csv`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -291,7 +310,7 @@ function exportData() {
 searchInput.addEventListener('input', render);
 userFilter.addEventListener('change', render);
 statusFilter.addEventListener('change', render);
-btnExport.addEventListener('click', exportData);
+btnExport.addEventListener('click', exportToCSV);
 
 document.querySelectorAll('th[data-sort]').forEach(th => {
     th.addEventListener('click', () => {
