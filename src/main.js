@@ -35,7 +35,6 @@ const userColors = {
     "Mika": "bg-pink-100 text-pink-700"
 };
 
-// État du tri courant : colonne + sens ('asc' ou 'desc')
 let sortState = { column: null, direction: 'asc' };
 
 const statusColors = {
@@ -44,22 +43,21 @@ const statusColors = {
     "Récupéré": "bg-emerald-100 text-emerald-700"
 };
 
-// Ordre du cycle quand on clique sur le bouton "Changer Status"
 const statusCycle = ["En transit", "Livré", "Récupéré"];
 
-// Initialize app
 async function init() {
-    const { data: { session } } = await supabaseClient.auth.getSession();
-
-    if (session) {
-        console.log("Session active, chargement des données...");
-        loginOverlay.classList.add('hidden');
-        loginOverlay.classList.remove('flex');
-        await fetchShipments();
-    } else {
-        console.log("Aucune session, affichage du login");
-        loginOverlay.classList.remove('hidden');
-        loginOverlay.classList.add('flex');
+    try {
+        const { data: { session } } = await supabaseClient.auth.getSession();
+        if (session) {
+            loginOverlay.classList.add('hidden');
+            loginOverlay.classList.remove('flex');
+            await fetchShipments();
+        } else {
+            loginOverlay.classList.remove('hidden');
+            loginOverlay.classList.add('flex');
+        }
+    } catch (e) {
+        console.error("Init error:", e);
     }
 }
 
@@ -69,24 +67,22 @@ async function fetchShipments() {
             .from('shipments')
             .select('*')
             .order('created_at', { ascending: false });
-
         if (error) throw error;
         shipments = data;
         render();
     } catch (err) {
-        console.error("Erreur lors de la récupération :", err);
-        alert("Erreur de connexion à la base de données : " + err.message);
+        alert("Erreur de connexion : " + err.message);
     }
 }
 
 function render() {
     tableBody.innerHTML = "";
-    const filterText = searchInput.value;
+    const filterText = searchInput.value.toLowerCase();
     const filterUser = userFilter.value;
 
     const filtered = shipments.filter(s => {
-        const matchesText = (s.id && s.id.toLowerCase().includes(filterText.toLowerCase())) ||
-                            (s.article && s.article.toLowerCase().includes(filterText.toLowerCase()));
+        const matchesText = (s.id && s.id.toLowerCase().includes(filterText)) ||
+                            (s.article && s.article.toLowerCase().includes(filterText));
         const matchesUser = filterUser === "All" || s.username === filterUser;
         return matchesText && matchesUser;
     });
@@ -98,15 +94,11 @@ function render() {
             let valA = a[col];
             let valB = b[col];
             if (col === 'frais') {
-                valA = parseInt(valA) || 0;
-                valB = parseInt(valB) || 0;
-                return (valA - valB) * dir;
+                return ((parseInt(valA) || 0) - (parseInt(valB) || 0)) * dir;
             }
             valA = (valA || '').toString().toLowerCase();
             valB = (valB || '').toString().toLowerCase();
-            if (valA < valB) return -1 * dir;
-            if (valA > valB) return 1 * dir;
-            return 0;
+            return valA < valB ? -1 * dir : (valA > valB ? 1 * dir : 0);
         });
     }
 
@@ -116,27 +108,24 @@ function render() {
         if (activeTh) activeTh.innerText = sortState.direction === 'asc' ? '▲' : '▼';
     }
 
-    let totalFrais = 0;
-    let fraisLivres = 0;
-    let fraisRecupere = 0;
-    let fraisTransit = 0;
+    let totalFrais = 0, fraisLivres = 0, fraisRecupere = 0, fraisTransit = 0;
 
     filtered.forEach((s) => {
         const fraisVal = parseInt(s.frais) || 0;
         totalFrais += fraisVal;
-        if (s.status === 'Livré') {
-            fraisLivres += fraisVal;
-        } else if (s.status === 'Récupéré') {
-            fraisRecupere += fraisVal;
-        } else {
-            fraisTransit += fraisVal;
-        }
+        if (s.status === 'Livré') fraisLivres += fraisVal;
+        else if (s.status === 'Récupéré') fraisRecupere += fraisVal;
+        else fraisTransit += fraisVal;
 
         const row = document.createElement('tr');
         row.className = "hover:bg-gray-50 transition-colors";
+
+        const userCol = userColors[s.username] || 'bg-gray-100 text-gray-700';
+        const statusCol = statusColors[s.status] || 'bg-gray-100 text-gray-700';
+
         row.innerHTML = `
             <td class="px-6 py-4">
-                <span class="px-2 py-1 rounded-full text-xs font-medium ${userColors[s.username] || 'bg-gray-100 text-gray-700'}">
+                <span class="px-2 py-1 rounded-full text-xs font-medium ${userCol}">
                     ${s.username}
                 </span>
             </td>
@@ -151,7 +140,7 @@ function render() {
                 </div>
             </td>
             <td class="px-6 py-4">
-                <span class="px-2 py-1 rounded-full text-xs font-medium ${statusColors[s.status] || 'bg-gray-100 text-gray-700'}">
+                <span class="px-2 py-1 rounded-full text-xs font-medium ${statusCol}">
                     ${s.status}
                 </span>
             </td>
@@ -177,21 +166,14 @@ function render() {
     statFraisTransit.innerText = fraisTransit.toLocaleString() + " Ar";
 }
 
-// --- Auth Actions ---
 loginForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     const email = document.getElementById('login-email').value;
     const password = document.getElementById('login-password').value;
     loginError.classList.add('hidden');
-
     try {
-        const { data, error } = await supabaseClient.auth.signInWithPassword({
-            email,
-            password,
-        });
-
+        const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
         if (error) throw error;
-
         loginOverlay.classList.add('hidden');
         loginOverlay.classList.remove('flex');
         await fetchShipments();
@@ -209,60 +191,45 @@ btnLogout.addEventListener('click', async () => {
         shipments = [];
         render();
     } catch (err) {
-        alert("Erreur lors de la déconnexion : " + err.message);
+        alert("Erreur : " + err.message);
     }
 });
 
-// --- Data Actions ---
 window.toggleStatus = async (id) => {
     const shipment = shipments.find(s => s.id === id);
     const currentIndex = statusCycle.indexOf(shipment.status);
     const newStatus = statusCycle[(currentIndex + 1) % statusCycle.length] || statusCycle[0];
-
     try {
-        const { error } = await supabaseClient
-            .from('shipments')
-            .update({ status: newStatus })
-            .eq('id', id);
-
+        const { error } = await supabaseClient.from('shipments').update({ status: newStatus }).eq('id', id);
         if (error) throw error;
         await fetchShipments();
     } catch (err) {
-        alert("Erreur lors de la mise à jour du statut : " + err.message);
+        alert("Erreur : " + err.message);
     }
 };
 
 window.deleteShipment = async (id) => {
-    if (confirm("Voulez-vous vraiment supprimer cet article ?")) {
+    if (confirm("Supprimer cet article ?")) {
         try {
-            const { error } = await supabaseClient
-                .from('shipments')
-                .delete()
-                .eq('id', id);
-
-        if (error) throw error;
-        await fetchShipments();
-    } catch (err) {
-        alert("Erreur lors de la suppression : " + err.message);
+            const { error } = await supabaseClient.from('shipments').delete().eq('id', id);
+            if (error) throw error;
+            await fetchShipments();
+        } catch (err) {
+            alert("Erreur : " + err.message);
+        }
     }
 };
 
 window.updateFrais = async (id, value) => {
-    const newValue = parseInt(value) || 0;
     try {
-        const { error } = await supabaseClient
-            .from('shipments')
-            .update({ frais: newValue })
-            .eq('id', id);
-
+        const { error } = await supabaseClient.from('shipments').update({ frais: parseInt(value) || 0 }).eq('id', id);
         if (error) throw error;
         await fetchShipments();
     } catch (err) {
-        alert("Erreur lors de la mise à jour des frais : " + err.message);
+        alert("Erreur : " + err.message);
     }
 };
 
-// Export
 function exportData() {
     const dataStr = JSON.stringify(shipments, null, 2);
     const dataBlob = new Blob([dataStr], { type: 'application/json' });
@@ -276,7 +243,6 @@ function exportData() {
     URL.revokeObjectURL(url);
 }
 
-// Event Listeners
 searchInput.addEventListener('input', render);
 userFilter.addEventListener('change', render);
 btnExport.addEventListener('click', exportData);
@@ -284,12 +250,8 @@ btnExport.addEventListener('click', exportData);
 document.querySelectorAll('th[data-sort]').forEach(th => {
     th.addEventListener('click', () => {
         const col = th.getAttribute('data-sort');
-        if (sortState.column === col) {
-            sortState.direction = sortState.direction === 'asc' ? 'desc' : 'asc';
-        } else {
-            sortState.column = col;
-            sortState.direction = 'asc';
-        }
+        sortState.direction = (sortState.column === col && sortState.direction === 'asc') ? 'desc' : 'asc';
+        sortState.column = col;
         render();
     });
 });
@@ -313,20 +275,15 @@ addForm.addEventListener('submit', async (e) => {
         frais: parseInt(document.getElementById('form-frais').value) || 0,
         status: document.getElementById('form-status').value,
     };
-
     try {
-        const { error } = await supabaseClient
-            .from('shipments')
-            .insert([newShipment]);
-
+        const { error } = await supabaseClient.from('shipments').insert([newShipment]);
         if (error) throw error;
         await fetchShipments();
-
         addForm.reset();
         modalAdd.classList.add('hidden');
         modalAdd.classList.remove('flex');
     } catch (err) {
-        alert("Erreur lors de l'ajout : " + err.message);
+        alert("Erreur : " + err.message);
     }
 });
 
