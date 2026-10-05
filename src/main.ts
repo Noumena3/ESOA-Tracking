@@ -82,8 +82,25 @@ async function handleUpdateFrais(id: string, value: string): Promise<void> {
     }
 }
 
+function setupNavigation() {
+    elements.tabShipments.addEventListener('click', () => {
+        elements.tabShipments.className = "px-4 py-2 rounded-lg text-sm font-bold transition-all bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm";
+        elements.tabInventory.className = "px-4 py-2 rounded-lg text-sm font-medium transition-all text-slate-600 dark:text-slate-400 hover:bg-white/50 dark:hover:bg-slate-700/50";
+        elements.viewShipments.classList.remove('hidden');
+        elements.viewInventory.classList.add('hidden');
+    });
+
+    elements.tabInventory.addEventListener('click', () => {
+        elements.tabInventory.className = "px-4 py-2 rounded-lg text-sm font-bold transition-all bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm";
+        elements.tabShipments.className = "px-4 py-2 rounded-lg text-sm font-medium transition-all text-slate-600 dark:text-slate-400 hover:bg-white/50 dark:hover:bg-slate-700/50";
+        elements.viewShipments.classList.add('hidden');
+        elements.viewInventory.classList.remove('hidden');
+    });
+}
+
 async function init(): Promise<void> {
     applyTheme();
+    setupNavigation();
     try {
         const session = await auth.getSession();
         if (session) {

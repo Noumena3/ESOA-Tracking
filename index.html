@@ -76,6 +76,16 @@
         </nav>
 
         <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <!-- Navigation Tabs -->
+            <div class="flex gap-2 mb-6 bg-slate-200 dark:bg-slate-800 p-1 rounded-xl w-fit">
+                <button id="tab-shipments" class="px-4 py-2 rounded-lg text-sm font-bold transition-all bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm">
+                    <i class="fas fa-truck mr-2"></i>Suivi
+                </button>
+                <button id="tab-inventory" class="px-4 py-2 rounded-lg text-sm font-medium transition-all text-slate-600 dark:text-slate-400 hover:bg-white/50 dark:hover:bg-slate-700/50">
+                    <i class="fas fa-boxes mr-2"></i>Inventaire
+                </button>
+            </div>
+
             <!-- Shipments View -->
             <div id="view-shipments" class="space-y-8">
                 <!-- Batch Actions Bar (Floating) -->
@@ -231,6 +241,14 @@
                             </tbody>
                         </table>
                     </div>
+                </div>
+            </div>
+
+            <!-- Inventory View (Placeholder) -->
+            <div id="view-inventory" class="hidden space-y-8">
+                <div class="bg-white dark:bg-slate-800 p-12 rounded-lg border border-gray-200 dark:border-slate-600 text-center">
+                    <i class="fas fa-boxes text-4xl text-gray-300 mb-4"></i>
+                    <p class="text-gray-500 dark:text-gray-400 font-medium">L'inventaire sera disponible prochainement.</p>
                 </div>
             </div>
         </main>

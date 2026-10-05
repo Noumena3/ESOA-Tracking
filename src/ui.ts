@@ -31,6 +31,11 @@ export const elements = {
     btnBatchDelete: document.getElementById('btn-batch-delete') as HTMLButtonElement,
     selectAllCheckbox: document.getElementById('select-all') as HTMLInputElement,
     btnThemeToggle: document.getElementById('btn-theme-toggle') as HTMLButtonElement,
+    // Navigation
+    tabShipments: document.getElementById('tab-shipments') as HTMLButtonElement,
+    tabInventory: document.getElementById('tab-inventory') as HTMLButtonElement,
+    viewShipments: document.getElementById('view-shipments') as HTMLElement,
+    viewInventory: document.getElementById('view-inventory') as HTMLElement,
 };
 
 const userColors: Record<string, string> = {
