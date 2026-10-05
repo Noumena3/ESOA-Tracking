@@ -126,11 +126,6 @@ async function handleDeleteProduct(id: string) {
     }
 }
 
-// ... previous imports ...
-import { elements, render, updateBatchBar, applyTheme, updateLoading, exportToCSV, renderInventory } from './ui';
-
-// ... other variables ...
-
 // Adding Product Modal Logic
 elements.btnAddProduct.addEventListener('click', () => {
     const modal = document.getElementById('modal-product');
@@ -168,7 +163,6 @@ document.getElementById('product-form')?.addEventListener('submit', async (e) =>
 });
 
 async function init(): Promise<void> {
-// ...
     applyTheme();
     setupNavigation();
     try {
