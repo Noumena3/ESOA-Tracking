@@ -1,4 +1,4 @@
-import { supabaseClient } from './api';
+import { supabaseClient } from './api.ts';
 
 export async function getSession() {
     const { data: { session } } = await supabaseClient.auth.getSession();

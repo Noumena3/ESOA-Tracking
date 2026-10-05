@@ -1,8 +1,8 @@
-import * as api from './api';
-import * as auth from './auth';
-import * as invApi from './inventoryApi';
-import { elements, render, updateBatchBar, applyTheme, updateLoading, exportToCSV, renderInventory } from './ui';
-import { Shipment } from './api';
+import * as api from './api.ts';
+import * as auth from './auth.ts';
+import * as invApi from './inventoryApi.ts';
+import { elements, render, updateBatchBar, applyTheme, updateLoading, exportToCSV, renderInventory } from './ui.ts';
+import { Shipment } from './api.ts';
 
 let shipments: Shipment[] = [];
 let selectedShipments = new Set<string>();
@@ -126,7 +126,49 @@ async function handleDeleteProduct(id: string) {
     }
 }
 
+// ... previous imports ...
+import { elements, render, updateBatchBar, applyTheme, updateLoading, exportToCSV, renderInventory } from './ui';
+
+// ... other variables ...
+
+// Adding Product Modal Logic
+elements.btnAddProduct.addEventListener('click', () => {
+    const modal = document.getElementById('modal-product');
+    modal?.classList.remove('hidden');
+    modal?.classList.add('flex');
+});
+
+document.getElementById('btn-close-product-modal')?.addEventListener('click', () => {
+    const modal = document.getElementById('modal-product');
+    modal?.classList.add('hidden');
+    modal?.classList.remove('flex');
+});
+
+document.getElementById('product-form')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const product = {
+        name: (document.getElementById('prod-name') as HTMLInputElement).value,
+        description: (document.getElementById('prod-desc') as HTMLTextAreaElement).value,
+        stock_quantity: parseInt((document.getElementById('prod-qty') as HTMLInputElement).value) || 0,
+        min_stock_level: parseInt((document.getElementById('prod-min') as HTMLInputElement).value) || 0,
+        price_unit: parseFloat((document.getElementById('prod-price') as HTMLInputElement).value) || 0,
+    };
+    try {
+        updateLoading(true);
+        await invApi.addProduct(product);
+        await refreshInventory();
+        (e.target as HTMLFormElement).reset();
+        document.getElementById('modal-product')?.classList.add('hidden');
+        document.getElementById('modal-product')?.classList.remove('flex');
+    } catch (err: any) {
+        alert("Erreur lors de l'ajout du produit : " + err.message);
+    } finally {
+        updateLoading(false);
+    }
+});
+
 async function init(): Promise<void> {
+// ...
     applyTheme();
     setupNavigation();
     try {

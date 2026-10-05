@@ -1,4 +1,4 @@
-import { Shipment } from './api';
+import { Shipment } from './api.ts';
 
 export const elements = {
     tableBody: document.getElementById('tracking-table-body') as HTMLElement,
@@ -31,6 +31,12 @@ export const elements = {
     btnBatchDelete: document.getElementById('btn-batch-delete') as HTMLButtonElement,
     selectAllCheckbox: document.getElementById('select-all') as HTMLInputElement,
     btnThemeToggle: document.getElementById('btn-theme-toggle') as HTMLButtonElement,
+    tabShipments: document.getElementById('tab-shipments') as HTMLButtonElement,
+    tabInventory: document.getElementById('tab-inventory') as HTMLButtonElement,
+    viewShipments: document.getElementById('view-shipments') as HTMLElement,
+    viewInventory: document.getElementById('view-inventory') as HTMLElement,
+    inventoryTableBody: document.getElementById('inventory-table-body') as HTMLElement,
+    btnAddProduct: document.getElementById('btn-add-product') as HTMLButtonElement,
 };
 
 const userColors: Record<string, string> = {
@@ -212,7 +218,41 @@ export function render(
     elements.statFraisTransit.innerText = fraisTransit.toLocaleString() + " Ar";
 }
 
-export function exportToCSV(shipments: Shipment[]): void {
+export function renderInventory(products: any[], onDeleteProduct: (id: string) => void) {
+    const { inventoryTableBody } = elements;
+    inventoryTableBody.innerHTML = "";
+
+    if (products.length === 0) {
+        inventoryTableBody.innerHTML = `<tr><td colspan="5" class="px-6 py-8 text-center text-gray-400">Aucun produit en stock</td></tr>`;
+        return;
+    }
+
+    products.forEach(p => {
+        const isLowStock = p.stock_quantity <= p.min_stock_level;
+        const row = document.createElement('tr');
+        row.className = "hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors";
+        row.innerHTML = `
+            <td class="px-6 py-4 font-medium text-gray-900 dark:text-white">${p.name}</td>
+            <td class="px-6 py-4 text-gray-500 dark:text-gray-400">${p.description || '-'}</td>
+            <td class="px-6 py-4 text-center">
+                <span class="px-2 py-1 rounded-full text-xs font-bold ${isLowStock ? 'bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-200' : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900 dark:text-emerald-200'}">
+                    ${p.stock_quantity}
+                </span>
+            </td>
+            <td class="px-6 py-4 font-mono-tag">${p.price_unit?.toLocaleString()} Ar</td>
+            <td class="px-6 py-4 text-right">
+                <button class="text-red-600 hover:text-red-900 p-1 btn-delete-product" data-id="${p.id}" title="Supprimer">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </td>
+        `;
+        inventoryTableBody.appendChild(row);
+    });
+
+    inventoryTableBody.querySelectorAll('.btn-delete-product').forEach(btn => {
+        (btn as HTMLElement).addEventListener('click', () => onDeleteProduct((btn as HTMLElement).dataset.id!));
+    });
+}
     if (shipments.length === 0) {
         alert("Aucune donnée à exporter.");
         return;
