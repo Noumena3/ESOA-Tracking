@@ -1,6 +1,7 @@
 import * as api from './api';
 import * as auth from './auth';
-import { elements, render, updateBatchBar, applyTheme, updateLoading, exportToCSV } from './ui';
+import * as invApi from './inventoryApi';
+import { elements, render, updateBatchBar, applyTheme, updateLoading, exportToCSV, renderInventory } from './ui';
 import { Shipment } from './api';
 
 let shipments: Shipment[] = [];
@@ -82,8 +83,52 @@ async function handleUpdateFrais(id: string, value: string): Promise<void> {
     }
 }
 
+function setupNavigation() {
+    elements.tabShipments.addEventListener('click', () => {
+        elements.tabShipments.className = "px-4 py-2 rounded-lg text-sm font-bold transition-all bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm";
+        elements.tabInventory.className = "px-4 py-2 rounded-lg text-sm font-medium transition-all text-slate-600 dark:text-slate-400 hover:bg-white/50 dark:hover:bg-slate-700/50";
+        elements.viewShipments.classList.remove('hidden');
+        elements.viewInventory.classList.add('hidden');
+    });
+
+    elements.tabInventory.addEventListener('click', async () => {
+        elements.tabInventory.className = "px-4 py-2 rounded-lg text-sm font-bold transition-all bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm";
+        elements.tabShipments.className = "px-4 py-2 rounded-lg text-sm font-medium transition-all text-slate-600 dark:text-slate-400 hover:bg-white/50 dark:hover:bg-slate-700/50";
+        elements.viewShipments.classList.add('hidden');
+        elements.viewInventory.classList.remove('hidden');
+        await refreshInventory();
+    });
+}
+
+async function refreshInventory() {
+    try {
+        updateLoading(true);
+        const products = await invApi.getProducts();
+        renderInventory(products, handleDeleteProduct);
+    } catch (err: any) {
+        alert("Erreur inventaire : " + err.message);
+    } finally {
+        updateLoading(false);
+    }
+}
+
+async function handleDeleteProduct(id: string) {
+    if (confirm("Supprimer ce produit ?")) {
+        try {
+            updateLoading(true);
+            await invApi.deleteProduct(id);
+            await refreshInventory();
+        } catch (err: any) {
+            alert("Erreur : " + err.message);
+        } finally {
+            updateLoading(false);
+        }
+    }
+}
+
 async function init(): Promise<void> {
     applyTheme();
+    setupNavigation();
     try {
         const session = await auth.getSession();
         if (session) {
