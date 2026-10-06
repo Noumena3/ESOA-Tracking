@@ -12,6 +12,16 @@ export interface Shipment {
     created_at?: string;
 }
 
+export interface Product {
+    id: string;
+    name: string;
+    description: string;
+    quantity: number;
+    alert_threshold: number;
+    unit_price: number;
+    created_at?: string;
+}
+
 export const supabaseClient = (window as any).supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 export async function getShipments(): Promise<Shipment[]> {
@@ -61,4 +71,54 @@ export async function logEvent(action: string, shipmentId: string, details: any 
     } catch (e) {
         console.error("Logging error:", e);
     }
+}
+
+// --- Product API ---
+
+export async function getProducts(): Promise<Product[]> {
+    const { data, error } = await supabaseClient
+        .from('products')
+        .select('*')
+        .order('name', { ascending: true });
+    if (error) throw error;
+    return data as Product[];
+}
+
+export async function insertProduct(product: Omit<Product, 'id' | 'created_at'>): Promise<boolean> {
+    const { error } = await supabaseClient.from('products').insert([product]);
+    if (error) throw error;
+    return true;
+}
+
+export async function updateProduct(id: string, updates: Partial<Product>): Promise<boolean> {
+    const { error } = await supabaseClient.from('products').update(updates).eq('id', id);
+    if (error) throw error;
+    return true;
+}
+
+export async function deleteProduct(id: string): Promise<boolean> {
+    const { error } = await supabaseClient.from('products').delete().eq('id', id);
+    if (error) throw error;
+    return true;
+}
+
+export async function reduceProductStock(productId: string, amount: number = 1): Promise<boolean> {
+    const { data: product, error: fetchError } = await supabaseClient
+        .from('products')
+        .select('quantity')
+        .eq('id', productId)
+        .single();
+
+    if (fetchError || !product) throw new Error("Produit non trouvé");
+
+    const newQuantity = product.quantity - amount;
+    if (newQuantity < 0) throw new Error("Stock insuffisant");
+
+    const { error: updateError } = await supabaseClient
+        .from('products')
+        .update({ quantity: newQuantity })
+        .eq('id', productId);
+
+    if (updateError) throw updateError;
+    return true;
 }

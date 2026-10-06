@@ -36,6 +36,8 @@ export const elements = {
     tabInventory: document.getElementById('tab-inventory') as HTMLButtonElement,
     viewShipments: document.getElementById('view-shipments') as HTMLElement,
     viewInventory: document.getElementById('view-inventory') as HTMLElement,
+    inventoryTableBody: document.getElementById('inventory-table-body') as HTMLElement,
+    btnAddProduct: document.getElementById('btn-add-product') as HTMLButtonElement,
 };
 
 const userColors: Record<string, string> = {
@@ -215,6 +217,69 @@ export function render(
     elements.statFraisLivres.innerText = fraisLivres.toLocaleString() + " Ar";
     elements.statFraisRecupere.innerText = fraisRecupere.toLocaleString() + " Ar";
     elements.statFraisTransit.innerText = fraisTransit.toLocaleString() + " Ar";
+}
+
+export function renderInventory(
+    products: any[],
+    onDeleteProduct: (id: string) => void
+): void {
+    const { inventoryTableBody } = elements;
+    inventoryTableBody.innerHTML = "";
+
+    if (products.length === 0) {
+        inventoryTableBody.innerHTML = `<tr><td colspan="5" class="px-6 py-12 text-center text-gray-400">Aucun produit en stock</td></tr>`;
+        return;
+    }
+
+    products.forEach(p => {
+        const isLowStock = p.quantity <= p.alert_threshold;
+        const row = document.createElement('tr');
+        row.className = "hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors";
+        row.innerHTML = `
+            <td class="px-6 py-4 font-medium ${isLowStock ? 'text-red-600 dark:text-red-400' : 'text-gray-900 dark:text-white'}">
+                ${p.name} ${isLowStock ? '<i class="fas fa-exclamation-triangle ml-2 text-amber-500" title="Stock Bas"></i>' : ''}
+            </td>
+            <td class="px-6 py-4 text-gray-500 dark:text-gray-400">${p.description || '-'}</td>
+            <td class="px-6 py-4 text-center font-mono-tag ${isLowStock ? 'text-red-600 dark:text-red-400 font-bold' : ''}">
+                ${p.quantity}
+            </td>
+            <td class="px-6 py-4 font-mono-tag">${p.unit_price?.toLocaleString()} Ar</td>
+            <td class="px-6 py-4 text-right">
+                <button class="text-red-600 hover:text-red-900 p-1 btn-delete-product" data-id="${p.id}" title="Supprimer">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </td>
+        `;
+        inventoryTableBody.appendChild(row);
+    });
+
+    inventoryTableBody.querySelectorAll('.btn-delete-product').forEach(btn => {
+        (btn as HTMLElement).addEventListener('click', () => onDeleteProduct((btn as HTMLElement).dataset.id!));
+    });
+}
+
+export function populateProductDropdown(products: any[]): void {
+    const articleInput = document.getElementById('form-article');
+    if (!articleInput) return;
+
+    const select = document.createElement('select');
+    select.id = 'form-article';
+    select.required = true;
+    select.className = "w-full px-4 py-2 border border-gray-200 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-amber-500 outline-none dark:bg-slate-700 dark:text-white";
+
+    const defaultOption = document.createElement('option');
+    defaultOption.value = "";
+    defaultOption.text = "Sélectionnez un produit...";
+    select.appendChild(defaultOption);
+
+    products.forEach(p => {
+        const option = document.createElement('option');
+        option.value = p.id;
+        option.text = `${p.name} (Stock: ${p.quantity})`;
+        select.appendChild(option);
+    });
+
+    articleInput.parentNode?.replaceChild(select, articleInput);
 }
 
 export function exportToCSV(shipments: Shipment[]): void {

@@ -1,9 +1,10 @@
 import * as api from './api.ts';
 import * as auth from './auth.ts';
-import { elements, render, updateBatchBar, applyTheme, updateLoading, exportToCSV } from './ui.ts';
-import { Shipment } from './api.ts';
+import { elements, render, renderInventory, populateProductDropdown, updateBatchBar, applyTheme, updateLoading, exportToCSV } from './ui.ts';
+import { Shipment, Product } from './api.ts';
 
 let shipments: Shipment[] = [];
+let products: Product[] = [];
 let selectedShipments = new Set<string>();
 let sortState = { column: null as string | null, direction: 'asc' as 'asc' | 'desc' };
 
@@ -14,6 +15,18 @@ async function refreshData(): Promise<void> {
         render(shipments, selectedShipments, sortState, handleToggleSelection, handleToggleStatus, handleDeleteShipment, handleUpdateFrais);
     } catch (err: any) {
         alert("Erreur de connexion : " + err.message);
+    } finally {
+        updateLoading(false);
+    }
+}
+
+async function refreshInventory(): Promise<void> {
+    try {
+        updateLoading(true);
+        products = await api.getProducts();
+        renderInventory(products, handleDeleteProduct);
+    } catch (err: any) {
+        alert("Erreur inventaire : " + err.message);
     } finally {
         updateLoading(false);
     }
@@ -82,6 +95,20 @@ async function handleUpdateFrais(id: string, value: string): Promise<void> {
     }
 }
 
+async function handleDeleteProduct(id: string): Promise<void> {
+    if (confirm("Supprimer ce produit ?")) {
+        try {
+            updateLoading(true);
+            await api.deleteProduct(id);
+            await refreshInventory();
+        } catch (err: any) {
+            alert("Erreur : " + err.message);
+        } finally {
+            updateLoading(false);
+        }
+    }
+}
+
 function setupNavigation() {
     elements.tabShipments.addEventListener('click', () => {
         elements.tabShipments.className = "px-4 py-2 rounded-lg text-sm font-bold transition-all bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm";
@@ -95,6 +122,8 @@ function setupNavigation() {
         elements.tabShipments.className = "px-4 py-2 rounded-lg text-sm font-medium transition-all text-slate-600 dark:text-slate-400 hover:bg-white/50 dark:hover:bg-slate-700/50";
         elements.viewShipments.classList.add('hidden');
         elements.viewInventory.classList.remove('hidden');
+
+        refreshInventory();
     });
 }
 
@@ -108,6 +137,10 @@ async function init(): Promise<void> {
             elements.loginOverlay.classList.remove('flex');
             elements.appContent.classList.remove('hidden');
             await refreshData();
+
+            // Load products for dropdown
+            products = await api.getProducts();
+            populateProductDropdown(products);
         } else {
             elements.loginOverlay.classList.remove('hidden');
             elements.loginOverlay.classList.add('flex');
@@ -130,6 +163,8 @@ elements.loginForm.addEventListener('submit', async (e) => {
         elements.loginOverlay.classList.remove('flex');
         elements.appContent.classList.remove('hidden');
         await refreshData();
+        products = await api.getProducts();
+        populateProductDropdown(products);
     } catch (err: any) {
         elements.loginError.innerText = err.message;
         elements.loginError.classList.remove('hidden');
@@ -143,6 +178,7 @@ elements.btnLogout.addEventListener('click', async () => {
         elements.loginOverlay.classList.add('flex');
         elements.appContent.classList.add('hidden');
         shipments = [];
+        products = [];
         selectedShipments.clear();
         updateBatchBar(0);
         render(shipments, selectedShipments, sortState, handleToggleSelection, handleToggleStatus, handleDeleteShipment, handleUpdateFrais);
@@ -170,18 +206,40 @@ elements.addForm.addEventListener('submit', async (e) => {
         alert("Les frais ne peuvent pas être négatifs.");
         return;
     }
+
+    const productId = (document.getElementById('form-article') as HTMLSelectElement).value;
+    if (!productId) {
+        alert("Veuillez sélectionner un produit.");
+        return;
+    }
+
+    const product = products.find(p => p.id === productId);
+    const productName = product ? product.name : "Unknown";
+
     const newShipment: Omit<Shipment, 'created_at'> = {
         username: (document.getElementById('form-user') as HTMLSelectElement).value,
         id: (document.getElementById('form-id') as HTMLInputElement).value,
-        article: (document.getElementById('form-article') as HTMLInputElement).value,
+        article: productName,
         frais: fraisValue,
         status: (document.getElementById('form-status') as HTMLSelectElement).value,
     };
+
     try {
         updateLoading(true);
+
+        // 1. Reduce stock first
+        await api.reduceProductStock(productId);
+
+        // 2. Insert shipment
         await api.insertShipment(newShipment);
-        await api.logEvent('CREATE', newShipment.id, { article: newShipment.article });
+        await api.logEvent('CREATE', newShipment.id, { article: productName });
+
         await refreshData();
+
+        // Update local product list and dropdown
+        products = await api.getProducts();
+        populateProductDropdown(products);
+
         elements.addForm.reset();
         elements.modalAdd.classList.add('hidden');
         elements.modalAdd.classList.remove('flex');
@@ -273,6 +331,47 @@ elements.btnThemeToggle.addEventListener('click', () => {
     const newTheme = isDark ? 'light' : 'dark';
     localStorage.setItem('theme', newTheme);
     applyTheme();
+});
+
+// Inventory specific event listeners
+elements.btnAddProduct.addEventListener('click', () => {
+    const modal = document.getElementById('modal-product');
+    if (modal) {
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+    }
+});
+
+document.getElementById('btn-close-product-modal')?.addEventListener('click', () => {
+    const modal = document.getElementById('modal-product');
+    if (modal) {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+    }
+});
+
+document.getElementById('product-form')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const product: Omit<api.Product, 'id' | 'created_at'> = {
+        name: (document.getElementById('prod-name') as HTMLInputElement).value,
+        description: (document.getElementById('prod-desc') as HTMLTextAreaElement).value,
+        quantity: parseInt((document.getElementById('prod-qty') as HTMLInputElement).value) || 0,
+        alert_threshold: parseInt((document.getElementById('prod-min') as HTMLInputElement).value) || 0,
+        unit_price: parseFloat((document.getElementById('prod-price') as HTMLInputElement).value) || 0,
+    };
+
+    try {
+        updateLoading(true);
+        await api.insertProduct(product);
+        await refreshInventory();
+        (e.target as HTMLFormElement).reset();
+        document.getElementById('modal-product')?.classList.add('hidden');
+        document.getElementById('modal-product')?.classList.remove('flex');
+    } catch (err: any) {
+        alert("Erreur : " + err.message);
+    } finally {
+        updateLoading(false);
+    }
 });
 
 init();
