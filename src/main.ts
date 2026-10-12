@@ -1,6 +1,6 @@
 import * as api from './api.ts';
 import * as auth from './auth.ts';
-import { elements, render, renderInventory, populateProductDropdown, updateBatchBar, applyTheme, updateLoading, exportToCSV } from './ui.ts';
+import { elements, render, populateProductDropdown, updateBatchBar, applyTheme, updateLoading, exportToCSV } from './ui.ts';
 import { Shipment, Product } from './api.ts';
 
 let shipments: Shipment[] = [];
@@ -15,18 +15,6 @@ async function refreshData(): Promise<void> {
         render(shipments, selectedShipments, sortState, handleToggleSelection, handleToggleStatus, handleDeleteShipment, handleUpdateFrais);
     } catch (err: any) {
         alert("Erreur de connexion : " + err.message);
-    } finally {
-        updateLoading(false);
-    }
-}
-
-async function refreshInventory(): Promise<void> {
-    try {
-        updateLoading(true);
-        products = await api.getProducts();
-        renderInventory(products, handleDeleteProduct);
-    } catch (err: any) {
-        alert("Erreur inventaire : " + err.message);
     } finally {
         updateLoading(false);
     }
@@ -95,41 +83,8 @@ async function handleUpdateFrais(id: string, value: string): Promise<void> {
     }
 }
 
-async function handleDeleteProduct(id: string): Promise<void> {
-    if (confirm("Supprimer ce produit ?")) {
-        try {
-            updateLoading(true);
-            await api.deleteProduct(id);
-            await refreshInventory();
-        } catch (err: any) {
-            alert("Erreur : " + err.message);
-        } finally {
-            updateLoading(false);
-        }
-    }
-}
-
-function setupNavigation() {
-    elements.tabShipments.addEventListener('click', () => {
-        elements.tabShipments.className = "px-4 py-2 rounded-lg text-sm font-bold transition-all bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm";
-        elements.tabInventory.className = "px-4 py-2 rounded-lg text-sm font-medium transition-all text-slate-600 dark:text-slate-400 hover:bg-white/50 dark:hover:bg-slate-700/50";
-        elements.viewShipments.classList.remove('hidden');
-        elements.viewInventory.classList.add('hidden');
-    });
-
-    elements.tabInventory.addEventListener('click', () => {
-        elements.tabInventory.className = "px-4 py-2 rounded-lg text-sm font-bold transition-all bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm";
-        elements.tabShipments.className = "px-4 py-2 rounded-lg text-sm font-medium transition-all text-slate-600 dark:text-slate-400 hover:bg-white/50 dark:hover:bg-slate-700/50";
-        elements.viewShipments.classList.add('hidden');
-        elements.viewInventory.classList.remove('hidden');
-
-        refreshInventory();
-    });
-}
-
 async function init(): Promise<void> {
     applyTheme();
-    setupNavigation();
     try {
         const session = await auth.getSession();
         if (session) {
@@ -331,47 +286,6 @@ elements.btnThemeToggle.addEventListener('click', () => {
     const newTheme = isDark ? 'light' : 'dark';
     localStorage.setItem('theme', newTheme);
     applyTheme();
-});
-
-// Inventory specific event listeners
-elements.btnAddProduct.addEventListener('click', () => {
-    const modal = document.getElementById('modal-product');
-    if (modal) {
-        modal.classList.remove('hidden');
-        modal.classList.add('flex');
-    }
-});
-
-document.getElementById('btn-close-product-modal')?.addEventListener('click', () => {
-    const modal = document.getElementById('modal-product');
-    if (modal) {
-        modal.classList.add('hidden');
-        modal.classList.remove('flex');
-    }
-});
-
-document.getElementById('product-form')?.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const product: Omit<api.Product, 'id' | 'created_at'> = {
-        name: (document.getElementById('prod-name') as HTMLInputElement).value,
-        description: (document.getElementById('prod-desc') as HTMLTextAreaElement).value,
-        quantity: parseInt((document.getElementById('prod-qty') as HTMLInputElement).value) || 0,
-        alert_threshold: parseInt((document.getElementById('prod-min') as HTMLInputElement).value) || 0,
-        unit_price: parseFloat((document.getElementById('prod-price') as HTMLInputElement).value) || 0,
-    };
-
-    try {
-        updateLoading(true);
-        await api.insertProduct(product);
-        await refreshInventory();
-        (e.target as HTMLFormElement).reset();
-        document.getElementById('modal-product')?.classList.add('hidden');
-        document.getElementById('modal-product')?.classList.remove('flex');
-    } catch (err: any) {
-        alert("Erreur : " + err.message);
-    } finally {
-        updateLoading(false);
-    }
 });
 
 init();
