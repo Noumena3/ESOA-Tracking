@@ -9,7 +9,7 @@ ESOA est une application web interne de suivi des expéditions. Son interface en
 - Connexion et déconnexion avec Supabase Auth.
 - Tableau des expéditions avec recherche, filtres, tri, sélection groupée et indicateurs de suivi et de frais.
 - Création, mise à jour de statut et suppression d’expéditions, seules ou par lot ; export des expéditions en CSV.
-- Création d’expéditions à partir des produits disponibles dans Supabase, avec décrémentation du stock et journalisation des événements de suivi.
+- Création d’expéditions avec saisie libre du nom de l’article et journalisation des événements de suivi.
 - Thème clair ou sombre, mémorisé dans le navigateur.
 
 ## Technologies et organisation
@@ -30,7 +30,7 @@ Pour générer la version de production, utiliser `npm run build` ; pour la pré
 
 ## Données attendues
 
-Le client utilise les tables Supabase `shipments`, `products` et `audit_logs`. Les expéditions comprennent notamment un identifiant, un utilisateur, un article, des frais et un statut. La table `products` fournit les articles et quantités disponibles pour créer une expédition ; sa gestion n’est plus proposée dans l’interface du site. L’accès aux tables et aux comptes dépend de la configuration Auth et des politiques d’accès de votre projet Supabase.
+Le client utilise les tables Supabase `shipments` et `audit_logs`. Les expéditions comprennent notamment un identifiant, un utilisateur, un article, des frais et un statut. Le nom de l’article est saisi librement lors de la création d’une expédition. L’accès aux tables et aux comptes dépend de la configuration Auth et des politiques d’accès de votre projet Supabase.
 
 ## État du dépôt
 

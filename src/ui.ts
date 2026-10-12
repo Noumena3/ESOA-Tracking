@@ -212,30 +212,6 @@ export function render(
     elements.statFraisTransit.innerText = fraisTransit.toLocaleString() + " Ar";
 }
 
-export function populateProductDropdown(products: any[]): void {
-    const articleInput = document.getElementById('form-article');
-    if (!articleInput) return;
-
-    const select = document.createElement('select');
-    select.id = 'form-article';
-    select.required = true;
-    select.className = "w-full px-4 py-2 border border-gray-200 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-amber-500 outline-none dark:bg-slate-700 dark:text-white";
-
-    const defaultOption = document.createElement('option');
-    defaultOption.value = "";
-    defaultOption.text = "Sélectionnez un produit...";
-    select.appendChild(defaultOption);
-
-    products.forEach(p => {
-        const option = document.createElement('option');
-        option.value = p.id;
-        option.text = `${p.name} (Stock: ${p.quantity})`;
-        select.appendChild(option);
-    });
-
-    articleInput.parentNode?.replaceChild(select, articleInput);
-}
-
 export function exportToCSV(shipments: Shipment[]): void {
     if (shipments.length === 0) {
         alert("Aucune donnée à exporter.");

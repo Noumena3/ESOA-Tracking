@@ -1,10 +1,9 @@
 import * as api from './api.ts';
 import * as auth from './auth.ts';
-import { elements, render, populateProductDropdown, updateBatchBar, applyTheme, updateLoading, exportToCSV } from './ui.ts';
-import { Shipment, Product } from './api.ts';
+import { elements, render, updateBatchBar, applyTheme, updateLoading, exportToCSV } from './ui.ts';
+import { Shipment } from './api.ts';
 
 let shipments: Shipment[] = [];
-let products: Product[] = [];
 let selectedShipments = new Set<string>();
 let sortState = { column: null as string | null, direction: 'asc' as 'asc' | 'desc' };
 
@@ -93,9 +92,6 @@ async function init(): Promise<void> {
             elements.appContent.classList.remove('hidden');
             await refreshData();
 
-            // Load products for dropdown
-            products = await api.getProducts();
-            populateProductDropdown(products);
         } else {
             elements.loginOverlay.classList.remove('hidden');
             elements.loginOverlay.classList.add('flex');
@@ -118,8 +114,6 @@ elements.loginForm.addEventListener('submit', async (e) => {
         elements.loginOverlay.classList.remove('flex');
         elements.appContent.classList.remove('hidden');
         await refreshData();
-        products = await api.getProducts();
-        populateProductDropdown(products);
     } catch (err: any) {
         elements.loginError.innerText = err.message;
         elements.loginError.classList.remove('hidden');
@@ -133,7 +127,6 @@ elements.btnLogout.addEventListener('click', async () => {
         elements.loginOverlay.classList.add('flex');
         elements.appContent.classList.add('hidden');
         shipments = [];
-        products = [];
         selectedShipments.clear();
         updateBatchBar(0);
         render(shipments, selectedShipments, sortState, handleToggleSelection, handleToggleStatus, handleDeleteShipment, handleUpdateFrais);
@@ -162,19 +155,16 @@ elements.addForm.addEventListener('submit', async (e) => {
         return;
     }
 
-    const productId = (document.getElementById('form-article') as HTMLSelectElement).value;
-    if (!productId) {
-        alert("Veuillez sélectionner un produit.");
+    const article = (document.getElementById('form-article') as HTMLInputElement).value.trim();
+    if (!article) {
+        alert("Veuillez saisir le nom de l’article.");
         return;
     }
-
-    const product = products.find(p => p.id === productId);
-    const productName = product ? product.name : "Unknown";
 
     const newShipment: Omit<Shipment, 'created_at'> = {
         username: (document.getElementById('form-user') as HTMLSelectElement).value,
         id: (document.getElementById('form-id') as HTMLInputElement).value,
-        article: productName,
+        article,
         frais: fraisValue,
         status: (document.getElementById('form-status') as HTMLSelectElement).value,
     };
@@ -182,18 +172,10 @@ elements.addForm.addEventListener('submit', async (e) => {
     try {
         updateLoading(true);
 
-        // 1. Reduce stock first
-        await api.reduceProductStock(productId);
-
-        // 2. Insert shipment
         await api.insertShipment(newShipment);
-        await api.logEvent('CREATE', newShipment.id, { article: productName });
+        await api.logEvent('CREATE', newShipment.id, { article });
 
         await refreshData();
-
-        // Update local product list and dropdown
-        products = await api.getProducts();
-        populateProductDropdown(products);
 
         elements.addForm.reset();
         elements.modalAdd.classList.add('hidden');
