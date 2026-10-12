@@ -266,4 +266,18 @@ elements.btnThemeToggle.addEventListener('click', () => {
     applyTheme();
 });
 
+document.getElementById('btn-messenger')?.addEventListener('click', () => {
+    const width = 420;
+    const height = 700;
+    const left = window.screenX + Math.max(0, (window.outerWidth - width) / 2);
+    const top = window.screenY + Math.max(0, (window.outerHeight - height) / 2);
+    const popup = window.open(
+        'https://www.facebook.com/messages/t/100583799205278',
+        'esoa-messenger',
+        `popup=yes,width=${width},height=${height},left=${left},top=${top},scrollbars=yes,resizable=yes`
+    );
+
+    if (popup) popup.opener = null;
+});
+
 init();
