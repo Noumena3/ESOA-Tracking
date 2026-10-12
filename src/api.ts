@@ -20,7 +20,10 @@ export async function getShipments(): Promise<Shipment[]> {
         .select('*')
         .order('created_at', { ascending: false });
     if (error) throw error;
-    return data as Shipment[];
+    return (data as Shipment[]).map(shipment => ({
+        ...shipment,
+        status: shipment.status === 'Livré' ? 'Arrivé' : shipment.status,
+    }));
 }
 
 export async function updateShipment(id: string, updates: Partial<Shipment>): Promise<boolean> {

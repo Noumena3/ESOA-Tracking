@@ -12,7 +12,7 @@ export const elements = {
     addForm: document.getElementById('add-form') as HTMLFormElement,
     loadingSpinner: document.getElementById('loading-spinner') as HTMLElement,
     statTotal: document.getElementById('stat-total') as HTMLElement,
-    statDelivered: document.getElementById('stat-delivered') as HTMLElement,
+    statArrived: document.getElementById('stat-arrived') as HTMLElement,
     statTransit: document.getElementById('stat-transit') as HTMLElement,
     statRecupere: document.getElementById('stat-recupere') as HTMLElement,
     statTotalFrais: document.getElementById('stat-total-frais') as HTMLElement,
@@ -41,7 +41,7 @@ const userColors: Record<string, string> = {
 
 const statusColors: Record<string, string> = {
     "En transit": "bg-amber-100 text-amber-700",
-    "Livré": "bg-sky-100 text-sky-700",
+    "Arrivé": "bg-sky-100 text-sky-700",
     "Récupéré": "bg-emerald-100 text-emerald-700"
 };
 
@@ -83,7 +83,7 @@ export function render(
     selectedShipments: Set<string>,
     sortState: { column: string | null, direction: 'asc' | 'desc' },
     onToggleSelection: (id: string) => void,
-    onToggleStatus: (id: string) => void,
+    onChangeStatus: (id: string, status: string) => void,
     onDeleteShipment: (id: string) => void,
     onUpdateFrais: (id: string, value: string) => void
 ): void {
@@ -108,7 +108,7 @@ export function render(
         selectAllCheckbox.checked = false;
     }
 
-    let totalFrais = 0, fraisLivres = 0, fraisRecupere = 0, fraisTransit = 0;
+    let totalFrais = 0, fraisArrives = 0, fraisRecupere = 0, fraisTransit = 0;
 
     if (filtered.length === 0) {
         tableBody.innerHTML = `
@@ -148,7 +148,7 @@ export function render(
         filtered.forEach((s) => {
             const fraisVal = parseInt(s.frais) || 0;
             totalFrais += fraisVal;
-            if (s.status === 'Livré') fraisLivres += fraisVal;
+            if (s.status === 'Arrivé') fraisArrives += fraisVal;
             else if (s.status === 'Récupéré') fraisRecupere += fraisVal;
             else fraisTransit += fraisVal;
 
@@ -174,12 +174,13 @@ export function render(
                     </div>
                 </td>
                 <td class="px-6 py-4">
-                    <span class="px-2 py-1 rounded-full text-xs font-medium ${statusCol}">${s.status}</span>
+                    <select class="px-2 py-1 rounded-full text-xs font-medium border-0 focus:ring-2 focus:ring-amber-500 ${statusCol} status-select" data-id="${s.id}" aria-label="Statut de l’expédition ${s.id}">
+                        <option value="En transit" ${s.status === 'En transit' ? 'selected' : ''}>En transit</option>
+                        <option value="Arrivé" ${s.status === 'Arrivé' ? 'selected' : ''}>Arrivé</option>
+                        <option value="Récupéré" ${s.status === 'Récupéré' ? 'selected' : ''}>Récupéré</option>
+                    </select>
                 </td>
                 <td class="px-6 py-4 text-right space-x-2">
-                    <button class="text-amber-600 hover:text-amber-800 p-1 btn-toggle-status" data-id="${s.id}" title="Changer Status">
-                        <i class="fas fa-sync-alt"></i>
-                    </button>
                     <button class="text-red-600 hover:text-red-900 p-1 btn-delete-shipment" data-id="${s.id}" title="Supprimer">
                         <i class="fas fa-trash"></i>
                     </button>
@@ -194,8 +195,11 @@ export function render(
         tableBody.querySelectorAll('.frais-input').forEach(input => {
             (input as HTMLInputElement).addEventListener('change', (e) => onUpdateFrais((input as HTMLInputElement).dataset.id, (e.target as HTMLInputElement).value));
         });
-        tableBody.querySelectorAll('.btn-toggle-status').forEach(btn => {
-            (btn as HTMLElement).addEventListener('click', () => onToggleStatus((btn as HTMLElement).dataset.id));
+        tableBody.querySelectorAll('.status-select').forEach(select => {
+            (select as HTMLSelectElement).addEventListener('change', (event) => {
+                const target = event.currentTarget as HTMLSelectElement;
+                onChangeStatus(target.dataset.id!, target.value);
+            });
         });
         tableBody.querySelectorAll('.btn-delete-shipment').forEach(btn => {
             (btn as HTMLElement).addEventListener('click', () => onDeleteShipment((btn as HTMLElement).dataset.id));
@@ -203,11 +207,11 @@ export function render(
     }
 
     elements.statTotal.innerText = filtered.length.toString();
-    elements.statDelivered.innerText = filtered.filter(s => s.status === "Livré").length.toString();
+    elements.statArrived.innerText = filtered.filter(s => s.status === "Arrivé").length.toString();
     elements.statTransit.innerText = filtered.filter(s => s.status === "En transit").length.toString();
     elements.statRecupere.innerText = filtered.filter(s => s.status === "Récupéré").length.toString();
     elements.statTotalFrais.innerText = totalFrais.toLocaleString() + " Ar";
-    elements.statFraisLivres.innerText = fraisLivres.toLocaleString() + " Ar";
+    elements.statFraisLivres.innerText = fraisArrives.toLocaleString() + " Ar";
     elements.statFraisRecupere.innerText = fraisRecupere.toLocaleString() + " Ar";
     elements.statFraisTransit.innerText = fraisTransit.toLocaleString() + " Ar";
 }

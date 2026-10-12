@@ -11,7 +11,7 @@ async function refreshData(): Promise<void> {
     try {
         updateLoading(true);
         shipments = await api.getShipments();
-        render(shipments, selectedShipments, sortState, handleToggleSelection, handleToggleStatus, handleDeleteShipment, handleUpdateFrais);
+        render(shipments, selectedShipments, sortState, handleToggleSelection, handleChangeStatus, handleDeleteShipment, handleUpdateFrais);
     } catch (err: any) {
         alert("Erreur de connexion : " + err.message);
     } finally {
@@ -26,16 +26,12 @@ function handleToggleSelection(id: string): void {
         selectedShipments.add(id);
     }
     updateBatchBar(selectedShipments.size);
-    render(shipments, selectedShipments, sortState, handleToggleSelection, handleToggleStatus, handleDeleteShipment, handleUpdateFrais);
+    render(shipments, selectedShipments, sortState, handleToggleSelection, handleChangeStatus, handleDeleteShipment, handleUpdateFrais);
 }
 
-async function handleToggleStatus(id: string): Promise<void> {
+async function handleChangeStatus(id: string, newStatus: string): Promise<void> {
     const shipment = shipments.find(s => s.id === id);
     if (!shipment) return;
-
-    const statusCycle = ["En transit", "Livré", "Récupéré"];
-    const currentIndex = statusCycle.indexOf(shipment.status);
-    const newStatus = statusCycle[(currentIndex + 1) % statusCycle.length] || statusCycle[0];
 
     try {
         updateLoading(true);
@@ -70,7 +66,7 @@ async function handleUpdateFrais(id: string, value: string): Promise<void> {
     const newValue = parseInt(value) || 0;
     if (newValue < 0) {
         alert("Les frais ne peuvent pas être négatifs.");
-        render(shipments, selectedShipments, sortState, handleToggleSelection, handleToggleStatus, handleDeleteShipment, handleUpdateFrais);
+        render(shipments, selectedShipments, sortState, handleToggleSelection, handleChangeStatus, handleDeleteShipment, handleUpdateFrais);
         return;
     }
     try {
@@ -129,7 +125,7 @@ elements.btnLogout.addEventListener('click', async () => {
         shipments = [];
         selectedShipments.clear();
         updateBatchBar(0);
-        render(shipments, selectedShipments, sortState, handleToggleSelection, handleToggleStatus, handleDeleteShipment, handleUpdateFrais);
+        render(shipments, selectedShipments, sortState, handleToggleSelection, handleChangeStatus, handleDeleteShipment, handleUpdateFrais);
     } catch (err: any) {
         alert("Erreur : " + err.message);
     }
@@ -187,16 +183,16 @@ elements.addForm.addEventListener('submit', async (e) => {
     }
 });
 
-elements.searchInput.addEventListener('input', () => render(shipments, selectedShipments, sortState, handleToggleSelection, handleToggleStatus, handleDeleteShipment, handleUpdateFrais));
-elements.userFilter.addEventListener('change', () => render(shipments, selectedShipments, sortState, handleToggleSelection, handleToggleStatus, handleDeleteShipment, handleUpdateFrais));
-elements.statusFilter.addEventListener('change', () => render(shipments, selectedShipments, sortState, handleToggleSelection, handleToggleStatus, handleDeleteShipment, handleUpdateFrais));
+elements.searchInput.addEventListener('input', () => render(shipments, selectedShipments, sortState, handleToggleSelection, handleChangeStatus, handleDeleteShipment, handleUpdateFrais));
+elements.userFilter.addEventListener('change', () => render(shipments, selectedShipments, sortState, handleToggleSelection, handleChangeStatus, handleDeleteShipment, handleUpdateFrais));
+elements.statusFilter.addEventListener('change', () => render(shipments, selectedShipments, sortState, handleToggleSelection, handleChangeStatus, handleDeleteShipment, handleUpdateFrais));
 
 document.querySelectorAll('th[data-sort]').forEach(th => {
     th.addEventListener('click', () => {
         const col = th.getAttribute('data-sort');
         sortState.direction = (sortState.column === col && sortState.direction === 'asc') ? 'desc' : 'asc';
         sortState.column = col;
-        render(shipments, selectedShipments, sortState, handleToggleSelection, handleToggleStatus, handleDeleteShipment, handleUpdateFrais);
+        render(shipments, selectedShipments, sortState, handleToggleSelection, handleChangeStatus, handleDeleteShipment, handleUpdateFrais);
     });
 });
 
@@ -220,7 +216,7 @@ elements.selectAllCheckbox.addEventListener('change', (e) => {
         filtered.forEach(s => selectedShipments.delete(s.id));
     }
     updateBatchBar(selectedShipments.size);
-    render(shipments, selectedShipments, sortState, handleToggleSelection, handleToggleStatus, handleDeleteShipment, handleUpdateFrais);
+    render(shipments, selectedShipments, sortState, handleToggleSelection, handleChangeStatus, handleDeleteShipment, handleUpdateFrais);
 });
 
 elements.btnBatchStatus.addEventListener('click', async () => {
