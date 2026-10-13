@@ -50,19 +50,22 @@ export async function deleteMultipleShipments(ids: string[]): Promise<boolean> {
     return true;
 }
 
-export async function logEvent(action: string, shipmentId: string, details: any = {}): Promise<void> {
+export async function logEvent(action: string, shipmentId: string, details: any = {}): Promise<boolean> {
     try {
         const { data: { user } } = await supabaseClient.auth.getUser();
         const username = user?.user_metadata?.full_name || user?.email || 'Unknown';
 
-        await supabaseClient.from('audit_logs').insert([{
+        const { error } = await supabaseClient.from('audit_logs').insert([{
             shipment_id: shipmentId,
             action: action,
             username: username,
             details: details
         }]);
+        if (error) throw error;
+        return true;
     } catch (e) {
         console.error("Logging error:", e);
+        return false;
     }
 }
 

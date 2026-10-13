@@ -7,6 +7,14 @@ let shipments: Shipment[] = [];
 let selectedShipments = new Set<string>();
 let sortState = { column: null as string | null, direction: 'asc' as 'asc' | 'desc' };
 
+async function logEventOrWarn(action: string, shipmentId: string, details: Record<string, unknown> = {}): Promise<boolean> {
+    const logged = await api.logEvent(action, shipmentId, details);
+    if (!logged) {
+        alert("L’action a été effectuée, mais son ajout à l’historique a échoué.");
+    }
+    return logged;
+}
+
 async function refreshData(): Promise<void> {
     try {
         updateLoading(true);
@@ -36,7 +44,7 @@ async function handleChangeStatus(id: string, newStatus: string): Promise<void> 
     try {
         updateLoading(true);
         await api.updateShipment(id, { status: newStatus });
-        await api.logEvent('STATUS_CHANGE', id, { old: shipment.status, new: newStatus });
+        await logEventOrWarn('STATUS_CHANGE', id, { old: shipment.status, new: newStatus });
         await refreshData();
     } catch (err: any) {
         alert("Erreur : " + err.message);
@@ -50,7 +58,7 @@ async function handleDeleteShipment(id: string): Promise<void> {
         try {
             updateLoading(true);
             await api.deleteShipment(id);
-            await api.logEvent('DELETE', id);
+            await logEventOrWarn('DELETE', id);
             selectedShipments.delete(id);
             updateBatchBar(selectedShipments.size);
             await refreshData();
@@ -63,15 +71,15 @@ async function handleDeleteShipment(id: string): Promise<void> {
 }
 
 async function handleUpdateFrais(id: string, value: string): Promise<void> {
-    const newValue = parseInt(value) || 0;
-    if (newValue < 0) {
-        alert("Les frais ne peuvent pas être négatifs.");
+    const newValue = value.trim() === '' ? 0 : Number(value);
+    if (!Number.isSafeInteger(newValue) || newValue < 0) {
+        alert("Les frais doivent être un nombre entier positif ou nul.");
         render(shipments, selectedShipments, sortState, handleToggleSelection, handleChangeStatus, handleDeleteShipment, handleUpdateFrais);
         return;
     }
     try {
         await api.updateShipment(id, { frais: newValue });
-        await api.logEvent('FRAIS_CHANGE', id, { newValue });
+        await logEventOrWarn('FRAIS_CHANGE', id, { newValue });
         await refreshData();
     } catch (err: any) {
         alert("Erreur : " + err.message);
@@ -145,9 +153,9 @@ elements.btnCloseModal.addEventListener('click', () => {
 
 elements.addForm.addEventListener('submit', async (e) => {
     e.preventDefault();
-    const fraisValue = parseInt((document.getElementById('form-frais') as HTMLInputElement).value) || 0;
-    if (fraisValue < 0) {
-        alert("Les frais ne peuvent pas être négatifs.");
+    const fraisValue = Number((document.getElementById('form-frais') as HTMLInputElement).value);
+    if (!Number.isSafeInteger(fraisValue) || fraisValue < 0) {
+        alert("Les frais doivent être un nombre entier positif ou nul.");
         return;
     }
 
@@ -157,9 +165,19 @@ elements.addForm.addEventListener('submit', async (e) => {
         return;
     }
 
+    const id = (document.getElementById('form-id') as HTMLInputElement).value.trim();
+    if (!id) {
+        alert("Veuillez saisir l’identifiant de tracking.");
+        return;
+    }
+    if (shipments.some(shipment => shipment.id === id)) {
+        alert("Cet identifiant de tracking existe déjà.");
+        return;
+    }
+
     const newShipment: Omit<Shipment, 'created_at'> = {
         username: (document.getElementById('form-user') as HTMLSelectElement).value,
-        id: (document.getElementById('form-id') as HTMLInputElement).value,
+        id,
         article,
         frais: fraisValue,
         status: (document.getElementById('form-status') as HTMLSelectElement).value,
@@ -169,7 +187,7 @@ elements.addForm.addEventListener('submit', async (e) => {
         updateLoading(true);
 
         await api.insertShipment(newShipment);
-        await api.logEvent('CREATE', newShipment.id, { article });
+        await logEventOrWarn('CREATE', newShipment.id, { article });
 
         await refreshData();
 
@@ -225,10 +243,12 @@ elements.btnBatchStatus.addEventListener('click', async () => {
 
     try {
         updateLoading(true);
+        let allEventsLogged = true;
         for (const id of selectedShipments) {
             await api.updateShipment(id, { status: newStatus });
-            await api.logEvent('STATUS_CHANGE', id, { newStatus });
+            if (!await api.logEvent('STATUS_CHANGE', id, { newStatus })) allEventsLogged = false;
         }
+        if (!allEventsLogged) alert("Les statuts ont été modifiés, mais une partie de l’historique n’a pas été enregistrée.");
         selectedShipments.clear();
         updateBatchBar(0);
         await refreshData();
@@ -246,9 +266,11 @@ elements.btnBatchDelete.addEventListener('click', async () => {
         updateLoading(true);
         const idsToDelete = Array.from(selectedShipments);
         await api.deleteMultipleShipments(idsToDelete);
+        let allEventsLogged = true;
         for (const id of idsToDelete) {
-            await api.logEvent('DELETE', id);
+            if (!await api.logEvent('DELETE', id)) allEventsLogged = false;
         }
+        if (!allEventsLogged) alert("Les articles ont été supprimés, mais une partie de l’historique n’a pas été enregistrée.");
         selectedShipments.clear();
         updateBatchBar(0);
         await refreshData();
