@@ -223,7 +223,7 @@
                             <thead class="bg-gray-50 dark:bg-slate-700 text-gray-600 dark:text-gray-300 text-xs uppercase font-semibold">
                                 <tr class="hover:bg-gray-100 dark:hover:bg-slate-600">
                                     <th class="px-6 py-4 border-b border-gray-100 dark:border-slate-700 text-center w-12">
-                                        <input type="checkbox" id="select-all" class="w-4 h-4 rounded border-gray-300 text-amber-600 focus:ring-amber-500">
+                                        <input type="checkbox" id="select-all" title="Sélectionner tous les articles de cette page" aria-label="Sélectionner tous les articles de cette page" class="w-4 h-4 rounded border-gray-300 text-amber-600 focus:ring-amber-500">
                                     </th>
                                     <th data-sort="username" class="px-6 py-4 border-b border-gray-100 dark:border-slate-700 cursor-pointer select-none hover:text-amber-700">Utilisateur <span class="sort-arrow"></span></th>
                                     <th data-sort="id" class="px-6 py-4 border-b border-gray-100 dark:border-slate-700 cursor-pointer select-none hover:text-amber-700">ID Tracking <span class="sort-arrow"></span></th>
@@ -238,6 +238,19 @@
                                 <!-- Data will be injected here -->
                             </tbody>
                         </table>
+                    </div>
+                    <div class="flex flex-col sm:flex-row items-center justify-between gap-3 border-t border-gray-100 dark:border-slate-700 px-4 py-3">
+                        <p id="pagination-info" class="text-sm text-gray-500 dark:text-gray-400" aria-live="polite"></p>
+                        <div class="flex items-center gap-2">
+                            <label for="page-size" class="text-sm text-gray-500 dark:text-gray-400">Par page</label>
+                            <select id="page-size" class="rounded border border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-700 px-2 py-1 text-sm dark:text-white">
+                                <option value="25">25</option>
+                                <option value="50">50</option>
+                                <option value="100">100</option>
+                            </select>
+                            <button id="btn-page-prev" type="button" class="rounded border border-gray-200 dark:border-slate-600 px-3 py-1 text-sm disabled:opacity-40" aria-label="Page précédente">Précédent</button>
+                            <button id="btn-page-next" type="button" class="rounded border border-gray-200 dark:border-slate-600 px-3 py-1 text-sm disabled:opacity-40" aria-label="Page suivante">Suivant</button>
+                        </div>
                     </div>
                 </div>
             </div>

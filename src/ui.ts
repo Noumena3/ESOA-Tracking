@@ -1,7 +1,11 @@
-import { Shipment } from './api.ts';
+import { Shipment, ShipmentSummary } from './api.ts';
 
 export const elements = {
     tableBody: document.getElementById('tracking-table-body') as HTMLElement,
+    paginationInfo: document.getElementById('pagination-info') as HTMLElement,
+    pageSize: document.getElementById('page-size') as HTMLSelectElement,
+    btnPagePrev: document.getElementById('btn-page-prev') as HTMLButtonElement,
+    btnPageNext: document.getElementById('btn-page-next') as HTMLButtonElement,
     searchInput: document.getElementById('search-input') as HTMLInputElement,
     userFilter: document.getElementById('user-filter') as HTMLSelectElement,
     statusFilter: document.getElementById('status-filter') as HTMLSelectElement,
@@ -90,37 +94,30 @@ export function applyTheme(): void {
 
 export function render(
     shipments: Shipment[],
+    summary: ShipmentSummary,
     selectedShipments: Set<string>,
+    page: number,
+    pageSize: number,
+    totalCount: number,
     sortState: { column: string | null, direction: 'asc' | 'desc' },
     onToggleSelection: (id: string) => void,
     onChangeStatus: (id: string, status: string) => void,
     onDeleteShipment: (id: string) => void,
     onUpdateFrais: (id: string, value: string) => void
 ): void {
-    const { tableBody, searchInput, userFilter, statusFilter, selectAllCheckbox } = elements;
+    const { tableBody, selectAllCheckbox } = elements;
     tableBody.innerHTML = "";
+    selectAllCheckbox.checked = shipments.length > 0 && shipments.every(s => selectedShipments.has(s.id));
+    const pageCount = Math.max(1, Math.ceil(totalCount / pageSize));
+    const firstItem = totalCount === 0 ? 0 : (page - 1) * pageSize + 1;
+    const lastItem = Math.min(page * pageSize, totalCount);
+    elements.paginationInfo.innerText = totalCount === 0
+        ? 'Aucun article'
+        : `Affichage ${firstItem}–${lastItem} sur ${totalCount} article(s) · page ${page}/${pageCount}`;
+    elements.btnPagePrev.disabled = page <= 1;
+    elements.btnPageNext.disabled = page >= pageCount;
 
-    const filterText = searchInput.value.toLowerCase();
-    const filterUser = userFilter.value;
-    const filterStatus = statusFilter.value;
-
-    const filtered = shipments.filter(s => {
-        const matchesText = (s.id && s.id.toLowerCase().includes(filterText)) ||
-                            (s.article && s.article.toLowerCase().includes(filterText));
-        const matchesUser = filterUser === "All" || s.username === filterUser;
-        const matchesStatus = filterStatus === "All" || s.status === filterStatus;
-        return matchesText && matchesUser && matchesStatus;
-    });
-
-    if (filtered.length > 0) {
-        selectAllCheckbox.checked = filtered.every(s => selectedShipments.has(s.id));
-    } else {
-        selectAllCheckbox.checked = false;
-    }
-
-    let totalFrais = 0, fraisArrives = 0, fraisRecupere = 0, fraisTransit = 0;
-
-    if (filtered.length === 0) {
+    if (shipments.length === 0) {
         tableBody.innerHTML = `
             <tr>
                 <td colspan="8" class="px-6 py-12 text-center">
@@ -132,24 +129,6 @@ export function render(
                 </td>
             </tr>`;
     } else {
-        if (sortState.column) {
-            const col = sortState.column;
-            const dir = sortState.direction === 'asc' ? 1 : -1;
-            filtered.sort((a, b) => {
-                let valA = (a as any)[col];
-                let valB = (b as any)[col];
-                if (col === 'created_at') {
-                    return ((valA ? new Date(valA).getTime() : 0) - (valB ? new Date(valB).getTime() : 0)) * dir;
-                }
-                if (col === 'frais') {
-                    return ((parseInt(valA) || 0) - (parseInt(valB) || 0)) * dir;
-                }
-                valA = (valA || '').toString().toLowerCase();
-                valB = (valB || '').toString().toLowerCase();
-                return valA < valB ? -1 * dir : (valA > valB ? 1 * dir : 0);
-            });
-        }
-
         document.querySelectorAll('th[data-sort] .sort-arrow').forEach(el => {
             (el as HTMLElement).innerText = '';
         });
@@ -158,13 +137,7 @@ export function render(
             if (activeTh) (activeTh as HTMLElement).innerText = sortState.direction === 'asc' ? '▲' : '▼';
         }
 
-        filtered.forEach((s) => {
-            const fraisVal = parseInt(s.frais) || 0;
-            totalFrais += fraisVal;
-            if (s.status === 'Arrivé') fraisArrives += fraisVal;
-            else if (s.status === 'Récupéré') fraisRecupere += fraisVal;
-            else fraisTransit += fraisVal;
-
+        shipments.forEach((s) => {
             const row = document.createElement('tr');
             row.className = "hover:bg-gray-50 transition-colors";
             const userCol = userColors[s.username] || 'bg-gray-100 text-gray-700';
@@ -220,14 +193,14 @@ export function render(
         });
     }
 
-    elements.statTotal.innerText = filtered.length.toString();
-    elements.statArrived.innerText = filtered.filter(s => s.status === "Arrivé").length.toString();
-    elements.statTransit.innerText = filtered.filter(s => s.status === "En transit").length.toString();
-    elements.statRecupere.innerText = filtered.filter(s => s.status === "Récupéré").length.toString();
-    elements.statTotalFrais.innerText = totalFrais.toLocaleString() + " Ar";
-    elements.statFraisLivres.innerText = fraisArrives.toLocaleString() + " Ar";
-    elements.statFraisRecupere.innerText = fraisRecupere.toLocaleString() + " Ar";
-    elements.statFraisTransit.innerText = fraisTransit.toLocaleString() + " Ar";
+    elements.statTotal.innerText = summary.total.toLocaleString();
+    elements.statArrived.innerText = summary.arrived.toLocaleString();
+    elements.statTransit.innerText = summary.transit.toLocaleString();
+    elements.statRecupere.innerText = summary.collected.toLocaleString();
+    elements.statTotalFrais.innerText = summary.totalFees.toLocaleString() + " Ar";
+    elements.statFraisLivres.innerText = summary.arrivedFees.toLocaleString() + " Ar";
+    elements.statFraisRecupere.innerText = summary.collectedFees.toLocaleString() + " Ar";
+    elements.statFraisTransit.innerText = summary.transitFees.toLocaleString() + " Ar";
 }
 
 export function exportToCSV(shipments: Shipment[]): void {

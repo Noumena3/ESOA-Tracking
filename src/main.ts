@@ -6,6 +6,30 @@ import { Shipment } from './api.ts';
 let shipments: Shipment[] = [];
 let selectedShipments = new Set<string>();
 let sortState = { column: null as string | null, direction: 'asc' as 'asc' | 'desc' };
+let shipmentSummary: api.ShipmentSummary = {
+    total: 0, arrived: 0, transit: 0, collected: 0,
+    totalFees: 0, arrivedFees: 0, collectedFees: 0, transitFees: 0,
+};
+let totalCount = 0;
+let currentPage = 1;
+let pageSize = Number(elements.pageSize.value) || 25;
+let searchDebounce: ReturnType<typeof setTimeout> | undefined;
+let latestLoadId = 0;
+
+function currentFilters(): api.ShipmentFilters {
+    return {
+        search: elements.searchInput.value,
+        username: elements.userFilter.value,
+        status: elements.statusFilter.value,
+    };
+}
+
+function renderCurrentPage(): void {
+    render(
+        shipments, shipmentSummary, selectedShipments, currentPage, pageSize, totalCount,
+        sortState, handleToggleSelection, handleChangeStatus, handleDeleteShipment, handleUpdateFrais
+    );
+}
 
 async function logEventOrWarn(action: string, shipmentId: string, details: Record<string, unknown> = {}): Promise<boolean> {
     const logged = await api.logEvent(action, shipmentId, details);
@@ -15,15 +39,33 @@ async function logEventOrWarn(action: string, shipmentId: string, details: Recor
     return logged;
 }
 
-async function refreshData(): Promise<void> {
+async function refreshData(requestedPage = currentPage): Promise<void> {
+    const loadId = ++latestLoadId;
     try {
         updateLoading(true);
-        shipments = await api.getShipments();
-        render(shipments, selectedShipments, sortState, handleToggleSelection, handleChangeStatus, handleDeleteShipment, handleUpdateFrais);
+        const filters = currentFilters();
+        const [result, summary] = await Promise.all([
+            api.getShipments(filters, requestedPage, pageSize, sortState),
+            api.getShipmentSummary(filters),
+        ]);
+        if (loadId !== latestLoadId) return;
+        totalCount = result.count;
+        const lastPage = Math.max(1, Math.ceil(totalCount / pageSize));
+        currentPage = Math.min(Math.max(1, requestedPage), lastPage);
+        if (currentPage !== requestedPage) {
+            const corrected = await api.getShipments(filters, currentPage, pageSize, sortState);
+            if (loadId !== latestLoadId) return;
+            shipments = corrected.data;
+            totalCount = corrected.count;
+        } else {
+            shipments = result.data;
+        }
+        shipmentSummary = summary;
+        renderCurrentPage();
     } catch (err: any) {
-        alert("Erreur de connexion : " + err.message);
+        if (loadId === latestLoadId) alert("Erreur de connexion : " + err.message);
     } finally {
-        updateLoading(false);
+        if (loadId === latestLoadId) updateLoading(false);
     }
 }
 
@@ -34,7 +76,7 @@ function handleToggleSelection(id: string): void {
         selectedShipments.add(id);
     }
     updateBatchBar(selectedShipments.size);
-    render(shipments, selectedShipments, sortState, handleToggleSelection, handleChangeStatus, handleDeleteShipment, handleUpdateFrais);
+    renderCurrentPage();
 }
 
 async function handleChangeStatus(id: string, newStatus: string): Promise<void> {
@@ -74,7 +116,7 @@ async function handleUpdateFrais(id: string, value: string): Promise<void> {
     const newValue = value.trim() === '' ? 0 : Number(value);
     if (!Number.isSafeInteger(newValue) || newValue < 0) {
         alert("Les frais doivent être un nombre entier positif ou nul.");
-        render(shipments, selectedShipments, sortState, handleToggleSelection, handleChangeStatus, handleDeleteShipment, handleUpdateFrais);
+        renderCurrentPage();
         return;
     }
     try {
@@ -133,13 +175,22 @@ elements.btnLogout.addEventListener('click', async () => {
         shipments = [];
         selectedShipments.clear();
         updateBatchBar(0);
-        render(shipments, selectedShipments, sortState, handleToggleSelection, handleChangeStatus, handleDeleteShipment, handleUpdateFrais);
+        renderCurrentPage();
     } catch (err: any) {
         alert("Erreur : " + err.message);
     }
 });
 
-elements.btnExport.addEventListener('click', () => exportToCSV(shipments));
+elements.btnExport.addEventListener('click', async () => {
+    try {
+        updateLoading(true);
+        exportToCSV(await api.getAllShipments(currentFilters()));
+    } catch (err: any) {
+        alert("Erreur lors de l’export : " + err.message);
+    } finally {
+        updateLoading(false);
+    }
+});
 
 elements.btnAdd.addEventListener('click', () => {
     elements.modalAdd.classList.remove('hidden');
@@ -170,11 +221,6 @@ elements.addForm.addEventListener('submit', async (e) => {
         alert("Veuillez saisir l’identifiant de tracking.");
         return;
     }
-    if (shipments.some(shipment => shipment.id === id)) {
-        alert("Cet identifiant de tracking existe déjà.");
-        return;
-    }
-
     const newShipment: Omit<Shipment, 'created_at'> = {
         username: (document.getElementById('form-user') as HTMLSelectElement).value,
         id,
@@ -184,6 +230,10 @@ elements.addForm.addEventListener('submit', async (e) => {
     };
 
     try {
+        if (await api.shipmentExists(id)) {
+            alert("Cet identifiant de tracking existe déjà.");
+            return;
+        }
         updateLoading(true);
 
         await api.insertShipment(newShipment);
@@ -201,40 +251,41 @@ elements.addForm.addEventListener('submit', async (e) => {
     }
 });
 
-elements.searchInput.addEventListener('input', () => render(shipments, selectedShipments, sortState, handleToggleSelection, handleChangeStatus, handleDeleteShipment, handleUpdateFrais));
-elements.userFilter.addEventListener('change', () => render(shipments, selectedShipments, sortState, handleToggleSelection, handleChangeStatus, handleDeleteShipment, handleUpdateFrais));
-elements.statusFilter.addEventListener('change', () => render(shipments, selectedShipments, sortState, handleToggleSelection, handleChangeStatus, handleDeleteShipment, handleUpdateFrais));
+elements.searchInput.addEventListener('input', () => {
+    clearTimeout(searchDebounce);
+    searchDebounce = setTimeout(() => { void refreshData(1); }, 250);
+});
+elements.userFilter.addEventListener('change', () => { void refreshData(1); });
+elements.statusFilter.addEventListener('change', () => { void refreshData(1); });
+elements.pageSize.addEventListener('change', () => {
+    pageSize = Number(elements.pageSize.value) || 25;
+    void refreshData(1);
+});
+elements.btnPagePrev.addEventListener('click', () => {
+    if (currentPage > 1) void refreshData(currentPage - 1);
+});
+elements.btnPageNext.addEventListener('click', () => {
+    if (currentPage * pageSize < totalCount) void refreshData(currentPage + 1);
+});
 
 document.querySelectorAll('th[data-sort]').forEach(th => {
     th.addEventListener('click', () => {
         const col = th.getAttribute('data-sort');
         sortState.direction = (sortState.column === col && sortState.direction === 'asc') ? 'desc' : 'asc';
         sortState.column = col;
-        render(shipments, selectedShipments, sortState, handleToggleSelection, handleChangeStatus, handleDeleteShipment, handleUpdateFrais);
+        void refreshData(1);
     });
 });
 
 elements.selectAllCheckbox.addEventListener('change', (e) => {
     const isChecked = (e.target as HTMLInputElement).checked;
-    const filterText = elements.searchInput.value.toLowerCase();
-    const filterUser = elements.userFilter.value;
-    const filterStatus = elements.statusFilter.value;
-
-    const filtered = shipments.filter(s => {
-        const matchesText = (s.id && s.id.toLowerCase().includes(filterText)) ||
-                            (s.article && s.article.toLowerCase().includes(filterText));
-        const matchesUser = filterUser === "All" || s.username === filterUser;
-        const matchesStatus = filterStatus === "All" || s.status === filterStatus;
-        return matchesText && matchesUser && matchesStatus;
-    });
-
     if (isChecked) {
-        filtered.forEach(s => selectedShipments.add(s.id));
+        shipments.forEach(s => selectedShipments.add(s.id));
     } else {
-        filtered.forEach(s => selectedShipments.delete(s.id));
+        shipments.forEach(s => selectedShipments.delete(s.id));
     }
     updateBatchBar(selectedShipments.size);
-    render(shipments, selectedShipments, sortState, handleToggleSelection, handleChangeStatus, handleDeleteShipment, handleUpdateFrais);
+    renderCurrentPage();
 });
 
 elements.btnBatchStatus.addEventListener('click', async () => {
