@@ -113,7 +113,7 @@ export function render(
     if (filtered.length === 0) {
         tableBody.innerHTML = `
             <tr>
-                <td colspan="7" class="px-6 py-12 text-center">
+                <td colspan="8" class="px-6 py-12 text-center">
                     <div class="flex flex-col items-center justify-center text-gray-400">
                         <i class="fas fa-box-open text-4xl mb-3"></i>
                         <p class="text-lg font-medium">Aucun article trouvé</p>
@@ -128,6 +128,9 @@ export function render(
             filtered.sort((a, b) => {
                 let valA = (a as any)[col];
                 let valB = (b as any)[col];
+                if (col === 'created_at') {
+                    return ((valA ? new Date(valA).getTime() : 0) - (valB ? new Date(valB).getTime() : 0)) * dir;
+                }
                 if (col === 'frais') {
                     return ((parseInt(valA) || 0) - (parseInt(valB) || 0)) * dir;
                 }
@@ -167,6 +170,7 @@ export function render(
                 </td>
                 <td class="px-6 py-4 font-medium text-gray-900 font-mono-tag">${s.id}</td>
                 <td class="px-6 py-4">${s.article}</td>
+                <td class="px-6 py-4 whitespace-nowrap">${s.created_at ? new Date(s.created_at).toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' }) : '—'}</td>
                 <td class="px-6 py-4">
                     <div class="flex items-center gap-2">
                         <input type="number" value="${s.frais}" class="w-24 px-2 py-1 border border-gray-200 rounded focus:ring-2 focus:ring-amber-500 outline-none text-sm font-medium font-mono-tag frais-input" data-id="${s.id}">
@@ -221,10 +225,11 @@ export function exportToCSV(shipments: Shipment[]): void {
         alert("Aucune donnée à exporter.");
         return;
     }
-    const headers = ["Utilisateur", "ID Tracking", "Article", "Frais Transit", "Status"];
+    const headers = ["Utilisateur", "ID Tracking", "Article", "Ajouté le", "Frais Transit", "Status"];
     const csvRows = [headers.join(",")];
     for (const s of shipments) {
-        csvRows.push([`"${s.username}"`, `"${s.id}"`, `"${s.article}"`, s.frais, `"${s.status}"`].join(","));
+        const createdAt = s.created_at ? new Date(s.created_at).toLocaleString('fr-FR') : '';
+        csvRows.push([`"${s.username}"`, `"${s.id}"`, `"${s.article}"`, `"${createdAt}"`, s.frais, `"${s.status}"`].join(","));
     }
     const csvString = csvRows.join("\n");
     const csvBlob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
