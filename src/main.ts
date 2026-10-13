@@ -2,6 +2,7 @@ import * as api from './api.ts';
 import * as auth from './auth.ts';
 import { elements, render, updateBatchBar, applyTheme, updateLoading, exportToCSV } from './ui.ts';
 import { Shipment } from './api.ts';
+import { isNonNegativeInteger, isShipmentStatus } from './domain.ts';
 
 let shipments: Shipment[] = [];
 let selectedShipments = new Set<string>();
@@ -114,7 +115,7 @@ async function handleDeleteShipment(id: string): Promise<void> {
 
 async function handleUpdateFrais(id: string, value: string): Promise<void> {
     const newValue = value.trim() === '' ? 0 : Number(value);
-    if (!Number.isSafeInteger(newValue) || newValue < 0) {
+    if (!isNonNegativeInteger(newValue)) {
         alert("Les frais doivent être un nombre entier positif ou nul.");
         renderCurrentPage();
         return;
@@ -205,7 +206,7 @@ elements.btnCloseModal.addEventListener('click', () => {
 elements.addForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     const fraisValue = Number((document.getElementById('form-frais') as HTMLInputElement).value);
-    if (!Number.isSafeInteger(fraisValue) || fraisValue < 0) {
+    if (!isNonNegativeInteger(fraisValue)) {
         alert("Les frais doivent être un nombre entier positif ou nul.");
         return;
     }
@@ -228,6 +229,10 @@ elements.addForm.addEventListener('submit', async (e) => {
         frais: fraisValue,
         status: (document.getElementById('form-status') as HTMLSelectElement).value,
     };
+    if (!isShipmentStatus(newShipment.status)) {
+        alert("Veuillez choisir un statut valide.");
+        return;
+    }
 
     try {
         if (await api.shipmentExists(id)) {

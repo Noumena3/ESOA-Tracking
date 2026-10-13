@@ -1,4 +1,5 @@
 import { Shipment, ShipmentSummary } from './api.ts';
+import { escapeHtml } from './domain.ts';
 
 export const elements = {
     tableBody: document.getElementById('tracking-table-body') as HTMLElement,
@@ -48,16 +49,6 @@ const statusColors: Record<string, string> = {
     "Arrivé": "bg-sky-100 text-sky-700",
     "Récupéré": "bg-emerald-100 text-emerald-700"
 };
-
-function escapeHtml(value: unknown): string {
-    return String(value ?? '').replace(/[&<>"']/g, character => ({
-        '&': '&amp;',
-        '<': '&lt;',
-        '>': '&gt;',
-        '"': '&quot;',
-        "'": '&#39;',
-    })[character]!);
-}
 
 export function updateLoading(isLoading: boolean): void {
     if (isLoading) {

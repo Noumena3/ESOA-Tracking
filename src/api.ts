@@ -1,3 +1,5 @@
+import { normalizeShipmentStatus, postgrestIlikePattern } from './domain.ts';
+
 // CONFIGURATION SUPABASE
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_KEY;
@@ -39,11 +41,7 @@ export const supabaseClient = (window as any).supabase.createClient(SUPABASE_URL
 function applyShipmentFilters(query: any, filters: ShipmentFilters): any {
     const search = filters.search.trim();
     if (search) {
-        const escaped = search
-            .replace(/\\/g, '\\\\')
-            .replace(/[%_]/g, character => `\\${character}`)
-            .replace(/"/g, '\\"');
-        const pattern = `"%${escaped}%"`;
+        const pattern = postgrestIlikePattern(search);
         query = query.or(`id.ilike.${pattern},article.ilike.${pattern}`);
     }
     if (filters.username !== 'All') query = query.eq('username', filters.username);
@@ -54,7 +52,7 @@ function applyShipmentFilters(query: any, filters: ShipmentFilters): any {
 function normalizeShipmentStatuses(data: Shipment[]): Shipment[] {
     return data.map(shipment => ({
         ...shipment,
-        status: shipment.status === 'Livré' ? 'Arrivé' : shipment.status,
+        status: normalizeShipmentStatus(shipment.status),
     }));
 }
 
