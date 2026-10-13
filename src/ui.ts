@@ -45,6 +45,16 @@ const statusColors: Record<string, string> = {
     "Récupéré": "bg-emerald-100 text-emerald-700"
 };
 
+function escapeHtml(value: unknown): string {
+    return String(value ?? '').replace(/[&<>"']/g, character => ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#39;',
+    })[character]!);
+}
+
 export function updateLoading(isLoading: boolean): void {
     if (isLoading) {
         elements.loadingSpinner.classList.remove('hidden');
@@ -163,29 +173,29 @@ export function render(
 
             row.innerHTML = `
                 <td class="px-6 py-4 text-center">
-                    <input type="checkbox" ${isSelected} class="w-4 h-4 rounded border-gray-300 text-amber-600 focus:ring-amber-500 checkbox-selection" data-id="${s.id}">
+                    <input type="checkbox" ${isSelected} class="w-4 h-4 rounded border-gray-300 text-amber-600 focus:ring-amber-500 checkbox-selection" data-id="${escapeHtml(s.id)}">
                 </td>
                 <td class="px-6 py-4">
-                    <span class="px-2 py-1 rounded-full text-xs font-medium ${userCol}">${s.username}</span>
+                    <span class="px-2 py-1 rounded-full text-xs font-medium ${userCol}">${escapeHtml(s.username)}</span>
                 </td>
-                <td class="px-6 py-4 font-medium text-gray-900 font-mono-tag">${s.id}</td>
-                <td class="px-6 py-4">${s.article}</td>
-                <td class="px-6 py-4 whitespace-nowrap">${s.created_at ? new Date(s.created_at).toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' }) : '—'}</td>
+                <td class="px-6 py-4 font-medium text-gray-900 font-mono-tag">${escapeHtml(s.id)}</td>
+                <td class="px-6 py-4">${escapeHtml(s.article)}</td>
+                <td class="px-6 py-4 whitespace-nowrap">${escapeHtml(s.created_at ? new Date(s.created_at).toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' }) : '—')}</td>
                 <td class="px-6 py-4">
                     <div class="flex items-center gap-2">
-                        <input type="number" value="${s.frais}" class="w-24 px-2 py-1 border border-gray-200 rounded focus:ring-2 focus:ring-amber-500 outline-none text-sm font-medium font-mono-tag frais-input" data-id="${s.id}">
+                        <input type="number" value="${escapeHtml(s.frais)}" class="w-24 px-2 py-1 border border-gray-200 rounded focus:ring-2 focus:ring-amber-500 outline-none text-sm font-medium font-mono-tag frais-input" data-id="${escapeHtml(s.id)}">
                         <span class="text-xs text-gray-500">Ar</span>
                     </div>
                 </td>
                 <td class="px-6 py-4">
-                    <select class="px-2 py-1 rounded-full text-xs font-medium border-0 focus:ring-2 focus:ring-amber-500 ${statusCol} status-select" data-id="${s.id}" aria-label="Statut de l’expédition ${s.id}">
+                    <select class="px-2 py-1 rounded-full text-xs font-medium border-0 focus:ring-2 focus:ring-amber-500 ${statusCol} status-select" data-id="${escapeHtml(s.id)}" aria-label="Statut de l’expédition ${escapeHtml(s.id)}">
                         <option value="En transit" ${s.status === 'En transit' ? 'selected' : ''}>En transit</option>
                         <option value="Arrivé" ${s.status === 'Arrivé' ? 'selected' : ''}>Arrivé</option>
                         <option value="Récupéré" ${s.status === 'Récupéré' ? 'selected' : ''}>Récupéré</option>
                     </select>
                 </td>
                 <td class="px-6 py-4 text-right space-x-2">
-                    <button class="text-red-600 hover:text-red-900 p-1 btn-delete-shipment" data-id="${s.id}" title="Supprimer">
+                    <button class="text-red-600 hover:text-red-900 p-1 btn-delete-shipment" data-id="${escapeHtml(s.id)}" title="Supprimer">
                         <i class="fas fa-trash"></i>
                     </button>
                 </td>
