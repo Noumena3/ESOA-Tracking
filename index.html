@@ -153,6 +153,40 @@
         html.dark #view-shipments > .grid > div h3, html.dark #view-shipments > .bg-white.rounded-lg h2 { color: #edf2f8 !important; }
         html.dark #view-shipments > .grid > div p { color: #9caabe !important; }
         html.dark #view-shipments > .bg-white.rounded-lg > .flex.border-t { border-color: #29364a !important; background: #121b28 !important; }
+        .app-sidebar { flex-basis: 276px; width: 276px; overflow-y: auto; }
+        .sidebar-summary { display: grid; gap: 1.05rem; margin-top: 1.55rem; padding: 0 .45rem; }
+        .sidebar-summary > .sidebar-label { padding: 0; }
+        .sidebar-stat-group { min-width: 0; }
+        .sidebar-stat-group h2 { display: flex; align-items: center; gap: .5rem; margin: 0 0 .35rem; color: #f2bd67; font-size: .69rem; font-weight: 700; letter-spacing: .04em; }
+        .sidebar-stat-group h2 i { width: 15px; font-size: .67rem; text-align: center; }
+        .sidebar-stats { display: grid; }
+        .sidebar-stat-row { display: flex; min-height: 37px; align-items: center; justify-content: space-between; gap: .4rem; border-bottom: 1px solid #ffffff10; }
+        .sidebar-stat-row:last-child { border-bottom: 0; }
+        .sidebar-stat-row span { display: inline-flex; min-width: 0; align-items: center; gap: .5rem; color: #aebacc; font-size: .69rem; }
+        .sidebar-stat-row span i { width: 14px; color: #8292a8; text-align: center; font-size: .67rem; }
+        .sidebar-stat-row strong { flex: none; color: #f6f8fb; font-family: 'IBM Plex Mono',monospace; font-size: .72rem; font-weight: 600; text-align: right; }
+        .sidebar-stat-row:nth-child(2) strong { color: #79c8e7; }
+        .sidebar-stat-row:nth-child(3) strong { color: #f1c36f; }
+        .sidebar-stat-row:nth-child(4) strong { color: #70d2a8; }
+        .fees-group { padding-top: .95rem; border-top: 1px solid #ffffff16; }
+        .fees-group .sidebar-stat-row strong { color: #f6f8fb; font-size: .66rem; }
+        .fees-group .sidebar-stat-row:nth-child(2) strong { color: #79c8e7; }
+        .fees-group .sidebar-stat-row:nth-child(3) strong { color: #70d2a8; }
+        .fees-group .sidebar-stat-row:nth-child(4) strong { color: #f1c36f; }
+        .fees-group .sidebar-stat-row:nth-child(4) { border: 0; }
+        @media (max-width: 1023px) {
+            .app-sidebar { display: grid; grid-template-columns: 1fr auto; gap: .75rem 1rem; overflow: visible; }
+            .sidebar-brand { grid-column: 1; grid-row: 1; }
+            .sidebar-nav { grid-column: 2; grid-row: 1; }
+            .sidebar-summary { grid-column: 1/-1; grid-row: 2; grid-template-columns: repeat(2,minmax(0,1fr)); gap: .75rem; margin: .25rem 0 0; padding: .85rem; border: 1px solid #ffffff16; border-radius: 13px; background: #ffffff08; }
+            .sidebar-summary > .sidebar-label { display: block; grid-column: 1/-1; }
+            .sidebar-stat-group h2 { margin-bottom: .25rem; }
+            .sidebar-stat-row { min-height: 32px; gap: .2rem; }
+            .sidebar-stat-row span { gap: .3rem; font-size: .62rem; }
+            .sidebar-stat-row span i { display: none; }
+            .sidebar-stat-row strong, .fees-group .sidebar-stat-row strong { font-size: .62rem; }
+            .fees-group { padding: 0 0 0 .75rem; border-top: 0; border-left: 1px solid #ffffff16; }
+        }
         @media (min-width: 1024px) { #app-content:not(.hidden) { flex-direction: row; } }
         @media (max-width: 1023px) {
             .app-sidebar { position: relative; width: 100%; height: auto; flex: none; padding: .7rem 1rem; }
@@ -222,10 +256,27 @@
             <nav class="sidebar-nav">
                 <button id="tab-shipments" type="button" class="sidebar-link is-active"><i class="fas fa-chart-pie" aria-hidden="true"></i><span>Vue d’ensemble</span></button>
             </nav>
-            <div class="sidebar-bottom">
-                <div class="sidebar-help"><span class="sidebar-help-icon"><i class="fas fa-headset" aria-hidden="true"></i></span><span><strong>Besoin d’aide ?</strong><small>Contactez l’équipe ESOA</small></span></div>
-                <div class="sidebar-caption">GESTION DES EXPÉDITIONS</div>
-            </div>
+            <section class="sidebar-summary" aria-label="Résumé des expéditions">
+                <span class="sidebar-label">SYNTHÈSE</span>
+                <div class="sidebar-stat-group">
+                    <h2><i class="fas fa-boxes-stacked" aria-hidden="true"></i> Articles</h2>
+                    <div class="sidebar-stats">
+                        <div class="sidebar-stat-row"><span><i class="fas fa-list-ul" aria-hidden="true"></i>Total articles</span><strong id="stat-total">0</strong></div>
+                        <div class="sidebar-stat-row"><span><i class="fas fa-check-circle" aria-hidden="true"></i>Arrivés</span><strong id="stat-arrived">0</strong></div>
+                        <div class="sidebar-stat-row"><span><i class="fas fa-truck" aria-hidden="true"></i>En transit</span><strong id="stat-transit">0</strong></div>
+                        <div class="sidebar-stat-row"><span><i class="fas fa-warehouse" aria-hidden="true"></i>Récupérés</span><strong id="stat-recupere">0</strong></div>
+                    </div>
+                </div>
+                <div class="sidebar-stat-group fees-group">
+                    <h2><i class="fas fa-coins" aria-hidden="true"></i> Frais</h2>
+                    <div class="sidebar-stats">
+                        <div class="sidebar-stat-row"><span><i class="fas fa-coins" aria-hidden="true"></i>Total des frais</span><strong id="stat-total-frais">0 Ar</strong></div>
+                        <div class="sidebar-stat-row"><span><i class="fas fa-circle-check" aria-hidden="true"></i>Articles arrivés</span><strong id="stat-frais-livres">0 Ar</strong></div>
+                        <div class="sidebar-stat-row"><span><i class="fas fa-hand-holding-dollar" aria-hidden="true"></i>Récupérés</span><strong id="stat-frais-recupere">0 Ar</strong></div>
+                        <div class="sidebar-stat-row"><span><i class="fas fa-truck-fast" aria-hidden="true"></i>En transit</span><strong id="stat-frais-transit">0 Ar</strong></div>
+                    </div>
+                </div>
+            </section>
         </aside>
 
         <div class="app-main-column">
@@ -268,82 +319,6 @@
                         <button id="btn-batch-delete" class="bg-red-600 hover:bg-red-500 text-white px-3 py-1 rounded text-sm font-bold transition-colors">
                             Supprimer
                         </button>
-                    </div>
-                </div>
-
-                <!-- Summary Cards -->
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-                    <div class="bg-white dark:bg-slate-800 p-4 rounded-lg border border-gray-200 dark:border-slate-600 border-l-4 border-l-slate-700">
-                        <div class="flex items-center justify-between">
-                            <div>
-                                <p class="text-xs text-gray-500 dark:text-gray-400 font-medium">Total Articles</p>
-                                <h3 id="stat-total" class="text-2xl font-bold text-gray-900 dark:text-white font-mono-tag">0</h3>
-                            </div>
-                            <i class="fas fa-list-ul text-slate-400"></i>
-                        </div>
-                    </div>
-                    <div class="bg-white dark:bg-slate-800 p-4 rounded-lg border border-gray-200 dark:border-slate-600 border-l-4 border-l-sky-500">
-                        <div class="flex items-center justify-between">
-                            <div>
-                                <p class="text-xs text-gray-500 dark:text-gray-400 font-medium">Arrivés</p>
-                                <h3 id="stat-arrived" class="text-2xl font-bold text-sky-600 font-mono-tag">0</h3>
-                            </div>
-                            <i class="fas fa-check-circle text-sky-400"></i>
-                        </div>
-                    </div>
-                    <div class="bg-white dark:bg-slate-800 p-4 rounded-lg border border-gray-200 dark:border-slate-600 border-l-4 border-l-amber-500">
-                        <div class="flex items-center justify-between">
-                            <div>
-                                <p class="text-xs text-gray-500 dark:text-gray-400 font-medium">En Transit</p>
-                                <h3 id="stat-transit" class="text-2xl font-bold text-amber-600 font-mono-tag">0</h3>
-                            </div>
-                            <i class="fas fa-truck text-amber-400"></i>
-                        </div>
-                    </div>
-                    <div class="bg-white dark:bg-slate-800 p-4 rounded-lg border border-gray-200 dark:border-slate-600 border-l-4 border-l-emerald-500">
-                        <div class="flex items-center justify-between">
-                            <div>
-                                <p class="text-xs text-gray-500 dark:text-gray-400 font-medium">Récupérés</p>
-                                <h3 id="stat-recupere" class="text-2xl font-bold text-emerald-600 font-mono-tag">0</h3>
-                            </div>
-                            <i class="fas fa-warehouse text-emerald-400"></i>
-                        </div>
-                    </div>
-                    <div class="bg-white dark:bg-slate-800 p-4 rounded-lg border border-gray-200 dark:border-slate-600 border-l-4 border-l-slate-700">
-                        <div class="flex items-center justify-between">
-                            <div>
-                                <p class="text-xs text-gray-500 dark:text-gray-400 font-medium">Total Frais</p>
-                                <h3 id="stat-total-frais" class="text-2xl font-bold text-slate-800 font-mono-tag">0 Ar</h3>
-                            </div>
-                            <i class="fas fa-coins text-slate-400"></i>
-                        </div>
-                    </div>
-                    <div class="bg-white dark:bg-slate-800 p-4 rounded-lg border border-gray-200 dark:border-slate-600 border-l-4 border-l-sky-500">
-                        <div class="flex items-center justify-between">
-                            <div>
-                                <p class="text-xs text-gray-500 dark:text-gray-400 font-medium">Frais Arrivés</p>
-                                <h3 id="stat-frais-livres" class="text-2xl font-bold text-sky-600 font-mono-tag">0 Ar</h3>
-                            </div>
-                            <i class="fas fa-hand-holding-usd text-sky-400"></i>
-                        </div>
-                    </div>
-                    <div class="bg-white dark:bg-slate-800 p-4 rounded-lg border border-gray-200 dark:border-slate-600 border-l-4 border-l-emerald-500">
-                        <div class="flex items-center justify-between">
-                            <div>
-                                <p class="text-xs text-gray-500 dark:text-gray-400 font-medium">Frais Récupérés</p>
-                                <h3 id="stat-frais-recupere" class="text-2xl font-bold text-emerald-600 font-mono-tag">0 Ar</h3>
-                            </div>
-                            <i class="fas fa-hand-holding-usd text-emerald-400"></i>
-                        </div>
-                    </div>
-                    <div class="bg-white dark:bg-slate-800 p-4 rounded-lg border border-gray-200 dark:border-slate-600 border-l-4 border-l-amber-500">
-                        <div class="flex items-center justify-between">
-                            <div>
-                                <p class="text-xs text-gray-500 dark:text-gray-400 font-medium">Frais Transit</p>
-                                <h3 id="stat-frais-transit" class="text-2xl font-bold text-amber-600 font-mono-tag">0 Ar</h3>
-                            </div>
-                            <i class="fas fa-truck-fast text-amber-400"></i>
-                        </div>
                     </div>
                 </div>
 
