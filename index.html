@@ -16,6 +16,70 @@
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
         body { font-family: 'Inter', sans-serif; }
         .font-mono-tag { font-family: 'IBM Plex Mono', monospace; }
+        /* Dashboard visual refresh: layout and behavior remain unchanged. */
+        body { background: #f5f7fb !important; color: #172033; }
+        #app-content > nav { background: rgba(255,255,255,.94) !important; color: #172033 !important; border-bottom: 1px solid #e4e9f1 !important; box-shadow: 0 4px 22px rgba(23,32,51,.05) !important; backdrop-filter: blur(14px); }
+        #app-content > nav .h-16 { min-height: 76px; }
+        #app-content > nav .text-amber-500 { color: #d58b16 !important; }
+        #app-content > nav button:not(#btn-add) { background: #f5f7fb !important; color: #334155 !important; border-color: #e2e8f0 !important; }
+        #app-content > nav button:not(#btn-add):hover { background: #eaf0f7 !important; }
+        #btn-add { background: #d99a2b !important; color: #fff !important; box-shadow: 0 5px 14px rgba(217,154,43,.24); }
+        #btn-add:hover { background: #c9871b !important; transform: translateY(-1px); }
+        main { max-width: 1440px !important; padding-top: 2.25rem !important; }
+        .dashboard-intro { position: relative; overflow: hidden; margin: 0 0 1.5rem; padding: 1.6rem 1.8rem; border: 1px solid #e5eaf2; border-radius: 20px; background: linear-gradient(112deg,#fff 0%,#fff 58%,#fff8e9 100%); box-shadow: 0 8px 28px rgba(23,32,51,.045); }
+        .dashboard-intro::after { content: ''; position: absolute; width: 190px; height: 190px; right: 5%; top: -115px; border: 28px solid rgba(217,154,43,.09); border-radius: 50%; pointer-events: none; }
+        .dashboard-kicker { display: inline-flex; align-items: center; gap: .45rem; margin-bottom: .45rem; color: #a46a0b; font-size: .7rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; }
+        .dashboard-intro h1 { margin: 0; color: #172033; font-size: clamp(1.35rem,2.5vw,1.85rem); font-weight: 750; letter-spacing: -.04em; }
+        .dashboard-intro p { margin: .4rem 0 0; color: #68758a; font-size: .92rem; }
+        #view-shipments > .flex.gap-2 { padding: 4px; border: 1px solid #e4e9f1; border-radius: 12px; background: #eaf0f7 !important; }
+        #tab-shipments { border-radius: 9px !important; color: #263247 !important; background: #fff !important; box-shadow: 0 2px 7px rgba(23,32,51,.08) !important; }
+        #batch-actions-bar { border: 1px solid #344258; box-shadow: 0 14px 40px rgba(15,23,42,.3); }
+        #view-shipments > .grid { gap: 1rem !important; margin-bottom: 1.75rem !important; }
+        #view-shipments > .grid > div { position: relative; overflow: hidden; min-height: 112px; padding: 1.1rem 1.2rem !important; border: 1px solid #e7ebf2 !important; border-left: 1px solid #e7ebf2 !important; border-radius: 16px !important; background: #fff !important; box-shadow: 0 5px 18px rgba(23,32,51,.035); transition: transform .18s ease,box-shadow .18s ease; }
+        #view-shipments > .grid > div:hover { transform: translateY(-2px); box-shadow: 0 10px 25px rgba(23,32,51,.08); }
+        #view-shipments > .grid > div::before { content: ''; position: absolute; inset: 0 auto 0 0; width: 4px; background: #94a3b8; }
+        #view-shipments > .grid > div:nth-child(2)::before, #view-shipments > .grid > div:nth-child(6)::before { background: #38a3d1; }
+        #view-shipments > .grid > div:nth-child(3)::before, #view-shipments > .grid > div:nth-child(8)::before { background: #d99a2b; }
+        #view-shipments > .grid > div:nth-child(4)::before, #view-shipments > .grid > div:nth-child(7)::before { background: #31a879; }
+        #view-shipments > .grid > div p { color: #778398 !important; font-size: .73rem !important; font-weight: 600 !important; letter-spacing: .015em; }
+        #view-shipments > .grid > div h3 { margin-top: .38rem; color: #172033 !important; font-size: 1.55rem !important; letter-spacing: -.035em; }
+        #view-shipments > .grid > div > .flex > i { display: grid; width: 42px; height: 42px; place-items: center; border-radius: 13px; background: #f3f6fa; font-size: 1rem; }
+        #view-shipments > .bg-white.rounded-lg { border: 1px solid #e5eaf1 !important; border-radius: 18px !important; background: #fff !important; box-shadow: 0 8px 30px rgba(23,32,51,.05) !important; }
+        #view-shipments > .bg-white.rounded-lg > .p-6 { padding: 1.25rem 1.4rem !important; border-color: #edf0f5 !important; }
+        #view-shipments > .bg-white.rounded-lg h2 { color: #172033 !important; font-size: 1rem !important; font-weight: 700 !important; }
+        #user-filter, #status-filter, #search-input, #page-size, #btn-page-prev, #btn-page-next { border-color: #e1e7ef !important; border-radius: 10px !important; background-color: #fff !important; color: #263247 !important; }
+        #user-filter:focus, #status-filter:focus, #search-input:focus { border-color: #d99a2b !important; box-shadow: 0 0 0 3px rgba(217,154,43,.14) !important; }
+        #view-shipments table thead { background: #f6f8fb !important; color: #66738a !important; }
+        #view-shipments table th { padding-top: .95rem !important; padding-bottom: .95rem !important; border-color: #e9edf3 !important; font-size: .68rem !important; letter-spacing: .055em; }
+        #tracking-table-body tr { transition: background .15s ease; }
+        #tracking-table-body tr:hover { background: #f8fafc !important; }
+        #tracking-table-body td { padding-top: .95rem !important; padding-bottom: .95rem !important; border-color: #edf0f4 !important; }
+        #view-shipments > .bg-white.rounded-lg > .flex.border-t { padding: .9rem 1.4rem !important; border-color: #edf0f5 !important; background: #fcfdff; }
+        #btn-page-prev, #btn-page-next { font-weight: 600; }
+        #modal-add > div, #modal-history > div { border: 1px solid #e7ebf2; box-shadow: 0 24px 80px rgba(15,23,42,.24); }
+        .dark body { background: #0c1220 !important; }
+        .dark #app-content > nav { background: rgba(15,23,42,.96) !important; color: #f8fafc !important; border-color: #263247 !important; }
+        .dark #app-content > nav button:not(#btn-add) { background: #1e293b !important; color: #e2e8f0 !important; border-color: #334155 !important; }
+        .dark .dashboard-intro { border-color: #263247; background: linear-gradient(112deg,#151e2d 0%,#151e2d 58%,#292316 100%); }
+        .dark .dashboard-intro h1 { color: #f8fafc; }
+        .dark .dashboard-intro p { color: #a7b3c5; }
+        .dark #view-shipments > .flex.gap-2 { border-color: #263247; background: #172033 !important; }
+        .dark #tab-shipments { background: #263247 !important; color: #f8fafc !important; }
+        .dark #view-shipments > .grid > div, .dark #view-shipments > .bg-white.rounded-lg { border-color: #29364b !important; background: #151e2d !important; }
+        .dark #view-shipments > .grid > div h3, .dark #view-shipments > .bg-white.rounded-lg h2 { color: #f1f5f9 !important; }
+        .dark #view-shipments > .grid > div p { color: #a7b3c5 !important; }
+        .dark #view-shipments > .grid > div > .flex > i { background: #202c40; }
+        .dark #user-filter, .dark #status-filter, .dark #search-input, .dark #page-size, .dark #btn-page-prev, .dark #btn-page-next { border-color: #334155 !important; background-color: #1e293b !important; color: #e2e8f0 !important; }
+        .dark #view-shipments table thead { background: #1c293b !important; color: #a7b3c5 !important; }
+        .dark #view-shipments table th, .dark #tracking-table-body td, .dark #view-shipments > .bg-white.rounded-lg > .p-6, .dark #view-shipments > .bg-white.rounded-lg > .flex.border-t { border-color: #29364b !important; }
+        .dark #tracking-table-body tr:hover { background: #1b283b !important; }
+        .dark #view-shipments > .bg-white.rounded-lg > .flex.border-t { background: #131c2a; }
+        @media (max-width: 640px) {
+            main { padding-top: 1.25rem !important; }
+            .dashboard-intro { padding: 1.25rem; border-radius: 16px; }
+            #view-shipments > .grid > div { min-height: 96px; }
+            #view-shipments > .bg-white.rounded-lg > .p-6 { padding: 1rem !important; }
+        }
     </style>
 </head>
 <body class="min-h-screen bg-[#FAF8F3] dark:bg-slate-950 transition-colors duration-300">
@@ -76,6 +140,11 @@
         </nav>
 
         <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <section class="dashboard-intro" aria-label="Présentation du tableau de bord">
+                <span class="dashboard-kicker"><i class="fas fa-boxes-stacked" aria-hidden="true"></i> ESOA · EXPÉDITIONS</span>
+                <h1>Vos expéditions, en un coup d’œil</h1>
+                <p>Suivez les articles, leur statut et les frais associés depuis un seul espace.</p>
+            </section>
             <!-- Navigation Tabs -->
             <div class="flex gap-2 mb-6 bg-slate-200 dark:bg-slate-800 p-1 rounded-xl w-fit">
                 <button id="tab-shipments" class="px-4 py-2 rounded-lg text-sm font-bold transition-all bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm">
