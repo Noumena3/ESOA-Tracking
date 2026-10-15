@@ -36,6 +36,15 @@ export interface ShipmentSort {
     direction: 'asc' | 'desc';
 }
 
+export interface AuditLogEntry {
+    id: number;
+    shipment_id: string;
+    action: string;
+    username: string;
+    details: Record<string, unknown>;
+    created_at: string;
+}
+
 export const supabaseClient = (window as any).supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 function applyShipmentFilters(query: any, filters: ShipmentFilters): any {
@@ -117,6 +126,16 @@ export async function shipmentExists(id: string): Promise<boolean> {
         .maybeSingle();
     if (error) throw error;
     return Boolean(data);
+}
+
+export async function getShipmentHistory(shipmentId: string): Promise<AuditLogEntry[]> {
+    const { data, error } = await supabaseClient
+        .from('audit_logs')
+        .select('id, shipment_id, action, username, details, created_at')
+        .eq('shipment_id', shipmentId)
+        .order('created_at', { ascending: false });
+    if (error) throw error;
+    return (data || []) as AuditLogEntry[];
 }
 
 export async function updateShipment(id: string, updates: Partial<Shipment>): Promise<boolean> {

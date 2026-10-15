@@ -1,6 +1,6 @@
 import * as api from './api.ts';
 import * as auth from './auth.ts';
-import { elements, render, updateBatchBar, applyTheme, updateLoading, exportToCSV } from './ui.ts';
+import { elements, render, renderShipmentHistory, updateBatchBar, applyTheme, updateLoading, exportToCSV } from './ui.ts';
 import { Shipment } from './api.ts';
 import { isNonNegativeInteger, isShipmentStatus } from './domain.ts';
 
@@ -28,8 +28,23 @@ function currentFilters(): api.ShipmentFilters {
 function renderCurrentPage(): void {
     render(
         shipments, shipmentSummary, selectedShipments, currentPage, pageSize, totalCount,
-        sortState, handleToggleSelection, handleChangeStatus, handleDeleteShipment, handleUpdateFrais
+        sortState, handleToggleSelection, handleChangeStatus, handleDeleteShipment, handleUpdateFrais, handleViewHistory
     );
+}
+
+async function handleViewHistory(shipment: Shipment): Promise<void> {
+    elements.historyTitle.textContent = `Historique — ${shipment.article} (${shipment.id})`;
+    elements.historyList.textContent = 'Chargement de l’historique…';
+    elements.modalHistory.classList.remove('hidden');
+    elements.modalHistory.classList.add('flex');
+
+    try {
+        const entries = await api.getShipmentHistory(shipment.id);
+        renderShipmentHistory(shipment, entries);
+    } catch (err: any) {
+        elements.historyList.textContent = 'Impossible de charger l’historique.';
+        alert("Erreur lors du chargement de l’historique : " + err.message);
+    }
 }
 
 async function logEventOrWarn(action: string, shipmentId: string, details: Record<string, unknown> = {}): Promise<boolean> {
@@ -201,6 +216,11 @@ elements.btnAdd.addEventListener('click', () => {
 elements.btnCloseModal.addEventListener('click', () => {
     elements.modalAdd.classList.add('hidden');
     elements.modalAdd.classList.remove('flex');
+});
+
+elements.btnCloseHistory.addEventListener('click', () => {
+    elements.modalHistory.classList.add('hidden');
+    elements.modalHistory.classList.remove('flex');
 });
 
 elements.addForm.addEventListener('submit', async (e) => {

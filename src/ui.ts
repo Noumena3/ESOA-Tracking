@@ -14,6 +14,10 @@ export const elements = {
     btnExport: document.getElementById('btn-export') as HTMLButtonElement,
     modalAdd: document.getElementById('modal-add') as HTMLElement,
     btnCloseModal: document.getElementById('btn-close-modal') as HTMLButtonElement,
+    modalHistory: document.getElementById('modal-history') as HTMLElement,
+    historyTitle: document.getElementById('history-title') as HTMLElement,
+    historyList: document.getElementById('history-list') as HTMLElement,
+    btnCloseHistory: document.getElementById('btn-close-history') as HTMLButtonElement,
     addForm: document.getElementById('add-form') as HTMLFormElement,
     loadingSpinner: document.getElementById('loading-spinner') as HTMLElement,
     statTotal: document.getElementById('stat-total') as HTMLElement,
@@ -94,7 +98,8 @@ export function render(
     onToggleSelection: (id: string) => void,
     onChangeStatus: (id: string, status: string) => void,
     onDeleteShipment: (id: string) => void,
-    onUpdateFrais: (id: string, value: string) => void
+    onUpdateFrais: (id: string, value: string) => void,
+    onViewHistory: (shipment: Shipment) => void
 ): void {
     const { tableBody, selectAllCheckbox } = elements;
     tableBody.innerHTML = "";
@@ -159,6 +164,9 @@ export function render(
                     </select>
                 </td>
                 <td class="px-6 py-4 text-right space-x-2">
+                    <button class="text-sky-600 hover:text-sky-800 p-1 btn-history-shipment" data-id="${escapeHtml(s.id)}" title="Voir l’historique" aria-label="Voir l’historique de ${escapeHtml(s.id)}">
+                        <i class="fas fa-clock" aria-hidden="true"></i>
+                    </button>
                     <button class="text-red-600 hover:text-red-900 p-1 btn-delete-shipment" data-id="${escapeHtml(s.id)}" title="Supprimer">
                         <i class="fas fa-trash"></i>
                     </button>
@@ -182,6 +190,12 @@ export function render(
         tableBody.querySelectorAll('.btn-delete-shipment').forEach(btn => {
             (btn as HTMLElement).addEventListener('click', () => onDeleteShipment((btn as HTMLElement).dataset.id));
         });
+        tableBody.querySelectorAll('.btn-history-shipment').forEach(btn => {
+            (btn as HTMLElement).addEventListener('click', () => {
+                const shipment = shipments.find(item => item.id === (btn as HTMLElement).dataset.id);
+                if (shipment) onViewHistory(shipment);
+            });
+        });
     }
 
     elements.statTotal.innerText = summary.total.toLocaleString();
@@ -192,6 +206,48 @@ export function render(
     elements.statFraisLivres.innerText = summary.arrivedFees.toLocaleString() + " Ar";
     elements.statFraisRecupere.innerText = summary.collectedFees.toLocaleString() + " Ar";
     elements.statFraisTransit.innerText = summary.transitFees.toLocaleString() + " Ar";
+}
+
+export function renderShipmentHistory(shipment: Shipment, entries: import('./api.ts').AuditLogEntry[]): void {
+    elements.historyTitle.textContent = `Historique — ${shipment.article} (${shipment.id})`;
+    elements.historyList.replaceChildren();
+
+    if (entries.length === 0) {
+        const empty = document.createElement('p');
+        empty.className = 'py-8 text-center text-sm text-gray-500 dark:text-gray-400';
+        empty.textContent = 'Aucun événement enregistré pour cet article.';
+        elements.historyList.appendChild(empty);
+        return;
+    }
+
+    for (const entry of entries) {
+        const card = document.createElement('article');
+        card.className = 'rounded-lg border border-gray-200 dark:border-slate-600 p-4';
+
+        const heading = document.createElement('div');
+        heading.className = 'flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1';
+        const action = document.createElement('strong');
+        action.className = 'text-sm text-gray-900 dark:text-white';
+        action.textContent = entry.action;
+        const date = document.createElement('time');
+        date.className = 'text-xs text-gray-500 dark:text-gray-400';
+        date.dateTime = entry.created_at;
+        date.textContent = new Date(entry.created_at).toLocaleString('fr-FR');
+        heading.append(action, date);
+
+        const actor = document.createElement('p');
+        actor.className = 'mt-2 text-sm text-gray-600 dark:text-gray-300';
+        actor.textContent = `Par ${entry.username}`;
+        card.append(heading, actor);
+
+        if (entry.details && Object.keys(entry.details).length > 0) {
+            const details = document.createElement('pre');
+            details.className = 'mt-2 overflow-x-auto whitespace-pre-wrap break-words text-xs text-gray-500 dark:text-gray-400';
+            details.textContent = JSON.stringify(entry.details, null, 2);
+            card.appendChild(details);
+        }
+        elements.historyList.appendChild(card);
+    }
 }
 
 export function exportToCSV(shipments: Shipment[]): void {

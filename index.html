@@ -304,6 +304,18 @@
             </div>
         </div>
 
+        <div id="modal-history" class="fixed inset-0 bg-black/50 hidden items-center justify-center z-[55] p-4" role="dialog" aria-modal="true" aria-labelledby="history-title">
+            <div class="bg-white dark:bg-slate-800 rounded-2xl max-w-2xl w-full max-h-[85vh] p-6 shadow-2xl flex flex-col">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 id="history-title" class="text-xl font-bold text-gray-900 dark:text-white">Historique de l’article</h3>
+                    <button id="btn-close-history" type="button" class="text-gray-400 hover:text-gray-600" aria-label="Fermer l’historique">
+                        <i class="fas fa-times text-xl" aria-hidden="true"></i>
+                    </button>
+                </div>
+                <div id="history-list" class="overflow-y-auto space-y-3" aria-live="polite"></div>
+            </div>
+        </div>
+
         <button id="btn-messenger" type="button" aria-label="Ouvrir la conversation ESOA sur Messenger" title="Discuter sur Messenger" class="fixed bottom-6 right-6 z-[60] flex h-14 w-14 items-center justify-center rounded-full bg-[#0084ff] text-white shadow-lg transition-transform hover:scale-110 hover:bg-[#006fe6] focus:outline-none focus:ring-4 focus:ring-blue-300">
             <i class="fa-brands fa-facebook-messenger text-3xl" aria-hidden="true"></i>
         </button>
