@@ -16,6 +16,7 @@ export const elements = {
     btnCloseModal: document.getElementById('btn-close-modal') as HTMLButtonElement,
     modalHistory: document.getElementById('modal-history') as HTMLElement,
     historyTitle: document.getElementById('history-title') as HTMLElement,
+    historySubtitle: document.getElementById('history-subtitle') as HTMLElement,
     historyList: document.getElementById('history-list') as HTMLElement,
     btnCloseHistory: document.getElementById('btn-close-history') as HTMLButtonElement,
     addForm: document.getElementById('add-form') as HTMLFormElement,
@@ -209,41 +210,62 @@ export function render(
 }
 
 export function renderShipmentHistory(shipment: Shipment, entries: import('./api.ts').AuditLogEntry[]): void {
-    elements.historyTitle.textContent = `Historique — ${shipment.article} (${shipment.id})`;
+    elements.historyTitle.textContent = shipment.article;
+    elements.historySubtitle.textContent = `Article · Référence ${shipment.id}`;
     elements.historyList.replaceChildren();
 
     if (entries.length === 0) {
         const empty = document.createElement('p');
-        empty.className = 'py-8 text-center text-sm text-gray-500 dark:text-gray-400';
-        empty.textContent = 'Aucun événement enregistré pour cet article.';
+        empty.className = 'rounded-xl border border-dashed border-gray-300 dark:border-slate-600 py-10 text-center text-sm text-gray-500 dark:text-gray-400';
+        empty.textContent = 'Aucune modification enregistrée pour cet article.';
         elements.historyList.appendChild(empty);
         return;
     }
 
     for (const entry of entries) {
         const card = document.createElement('article');
-        card.className = 'rounded-lg border border-gray-200 dark:border-slate-600 p-4';
+        card.className = 'relative rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-800/70';
 
         const heading = document.createElement('div');
-        heading.className = 'flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1';
+        heading.className = 'flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2';
         const action = document.createElement('strong');
-        action.className = 'text-sm text-gray-900 dark:text-white';
-        action.textContent = entry.action;
+        const actionNames: Record<string, string> = { CREATE: 'Article ajouté', STATUS_CHANGE: 'Statut modifié', DELETE: 'Article supprimé', FRAIS_CHANGE: 'Frais modifiés' };
+        action.className = 'inline-flex items-center gap-2 text-sm font-semibold text-gray-900 dark:text-white';
+        const actionIcon = document.createElement('i');
+        actionIcon.className = `fas ${entry.action === 'CREATE' ? 'fa-circle-plus text-emerald-500' : entry.action === 'DELETE' ? 'fa-trash text-red-500' : entry.action === 'STATUS_CHANGE' ? 'fa-arrows-rotate text-blue-500' : 'fa-pen-to-square text-amber-500'}`;
+        actionIcon.setAttribute('aria-hidden', 'true');
+        action.append(actionIcon, document.createTextNode(actionNames[entry.action] || entry.action.replaceAll('_', ' ')));
         const date = document.createElement('time');
         date.className = 'text-xs text-gray-500 dark:text-gray-400';
         date.dateTime = entry.created_at;
-        date.textContent = new Date(entry.created_at).toLocaleString('fr-FR');
+        date.textContent = new Date(entry.created_at).toLocaleString('fr-FR', { dateStyle: 'medium', timeStyle: 'short' });
         heading.append(action, date);
 
         const actor = document.createElement('p');
-        actor.className = 'mt-2 text-sm text-gray-600 dark:text-gray-300';
-        actor.textContent = `Par ${entry.username}`;
+        actor.className = 'mt-2 flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400';
+        const actorIcon = document.createElement('i');
+        actorIcon.className = 'fas fa-user-circle';
+        actorIcon.setAttribute('aria-hidden', 'true');
+        actor.append(actorIcon, document.createTextNode(entry.username));
         card.append(heading, actor);
 
         if (entry.details && Object.keys(entry.details).length > 0) {
-            const details = document.createElement('pre');
-            details.className = 'mt-2 overflow-x-auto whitespace-pre-wrap break-words text-xs text-gray-500 dark:text-gray-400';
-            details.textContent = JSON.stringify(entry.details, null, 2);
+            const details = document.createElement('div');
+            details.className = 'mt-3 grid gap-2 border-t border-gray-100 pt-3 dark:border-slate-700';
+            const labels: Record<string, string> = { article: 'Article', old: 'Ancien statut', new: 'Nouveau statut', newValue: 'Nouveaux frais' };
+            for (const [key, value] of Object.entries(entry.details)) {
+                const row = document.createElement('div');
+                row.className = 'flex flex-wrap items-center gap-x-2 gap-y-1 text-sm';
+                const label = document.createElement('span');
+                label.className = 'text-gray-500 dark:text-gray-400';
+                label.textContent = labels[key] || key.replaceAll('_', ' ');
+                const valueText = document.createElement('span');
+                valueText.className = 'font-medium text-gray-800 dark:text-gray-100';
+                const statusNames: Record<string, string> = { 'En transit': 'En transit', 'Arrivé': 'Arrivé', 'Récupéré': 'Récupéré' };
+                valueText.textContent = key === 'newValue' && typeof value === 'number' ? `${value.toLocaleString('fr-FR')} Ar` : statusNames[String(value)] || String(value);
+                row.append(label, valueText);
+                details.appendChild(row);
+            }
             card.appendChild(details);
         }
         elements.historyList.appendChild(card);
