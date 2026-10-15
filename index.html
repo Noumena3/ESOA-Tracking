@@ -80,6 +80,105 @@
             #view-shipments > .grid > div { min-height: 96px; }
             #view-shipments > .bg-white.rounded-lg > .p-6 { padding: 1rem !important; }
         }
+        /* New app shell: vertical workspace navigation and a dedicated content canvas. */
+        #app-content { display: flex; flex-direction: column; background: #f3f5f8; }
+        #app-content.hidden { display: none; }
+        .app-sidebar { position: sticky; z-index: 30; top: 0; display: flex; flex: 0 0 248px; flex-direction: column; width: 248px; height: 100vh; padding: 1.5rem 1.1rem 1.1rem; background: #182334; color: #d6deea; }
+        .sidebar-brand { display: flex; align-items: center; gap: .8rem; padding: .2rem .4rem 2.25rem; color: inherit; text-decoration: none; }
+        .sidebar-brand-mark { display: grid; width: 44px; height: 44px; place-items: center; border-radius: 14px; background: #e9ab45; color: #182334; font-size: 1.15rem; box-shadow: 0 6px 18px #e9ab4533; }
+        .sidebar-brand strong, .sidebar-brand small, .sidebar-help strong, .sidebar-help small { display: block; }
+        .sidebar-brand strong { color: #fff; font-size: 1.08rem; letter-spacing: .04em; }
+        .sidebar-brand small { margin-top: .12rem; color: #8997aa; font-size: .72rem; }
+        .sidebar-label { padding: 0 .55rem; color: #77869b; font-size: .63rem; font-weight: 700; letter-spacing: .13em; }
+        .sidebar-nav { display: grid; gap: .4rem; margin-top: .75rem; }
+        .sidebar-link { display: flex; width: 100%; align-items: center; gap: .8rem; padding: .78rem .85rem; border: 0; border-radius: 11px; background: transparent; color: #b9c4d3; text-align: left; font-size: .86rem; font-weight: 600; cursor: pointer; transition: .18s ease; }
+        .sidebar-link i { width: 18px; color: #98a8bd; text-align: center; }
+        .sidebar-link:hover { background: #ffffff0d; color: #fff; }
+        .sidebar-link.is-active { background: #29394e; color: #fff; box-shadow: inset 3px 0 #e9ab45; }
+        .sidebar-link.is-active i { color: #f2bd67; }
+        .sidebar-bottom { margin-top: auto; }
+        .sidebar-help { display: flex; align-items: center; gap: .7rem; padding: .85rem .75rem; border: 1px solid #ffffff14; border-radius: 12px; background: #ffffff08; }
+        .sidebar-help-icon { display: grid; width: 34px; height: 34px; flex: none; place-items: center; border-radius: 10px; background: #e9ab451a; color: #f2bd67; }
+        .sidebar-help strong { color: #e8edf4; font-size: .75rem; }
+        .sidebar-help small { margin-top: .2rem; color: #8997aa; font-size: .64rem; }
+        .sidebar-caption { padding: 1.2rem .4rem .1rem; color: #68778c; font-size: .57rem; font-weight: 700; letter-spacing: .11em; }
+        .app-main-column { min-width: 0; flex: 1; }
+        .app-topbar { position: sticky; z-index: 20; top: 0; display: flex; min-height: 76px; align-items: center; justify-content: space-between; gap: 1rem; padding: .8rem clamp(1rem,3vw,2.5rem); border-bottom: 1px solid #e5e9ef; background: #ffffffed; backdrop-filter: blur(14px); }
+        .topbar-context strong, .topbar-eyebrow { display: block; }
+        .topbar-eyebrow { margin-bottom: .22rem; color: #8994a5; font-size: .59rem; font-weight: 700; letter-spacing: .12em; }
+        .topbar-context strong { color: #263247; font-size: .92rem; }
+        .topbar-actions { display: flex; align-items: center; gap: .55rem; }
+        .topbar-icon-button, .topbar-secondary-button, .topbar-primary-button { display: inline-flex; min-height: 40px; align-items: center; justify-content: center; gap: .5rem; padding: .55rem .8rem; border: 1px solid #e2e7ee; border-radius: 10px; background: #fff; color: #526075; font-size: .78rem; font-weight: 650; cursor: pointer; transition: .18s ease; }
+        .topbar-icon-button:hover, .topbar-secondary-button:hover { background: #f5f7fa; color: #1f2d42; }
+        .topbar-primary-button { padding-inline: 1rem; border-color: #e4a83e; background: #e9ab45; color: #202b3a; box-shadow: 0 4px 12px #e9ab4533; }
+        .topbar-primary-button:hover { transform: translateY(-1px); background: #f0b957; }
+        main.dashboard-main { width: min(100%,1600px); max-width: none !important; margin: 0 auto; padding: clamp(1.25rem,3vw,2.5rem) clamp(1rem,3vw,2.5rem) 3rem !important; }
+        .dashboard-intro { display: flex; min-height: 176px; align-items: center; justify-content: space-between; gap: 2rem; margin-bottom: 1.65rem; padding: 1.8rem 2rem; border: 1px solid #e6e9ed; border-radius: 18px; background: #fff; box-shadow: 0 5px 20px #18233408; }
+        .dashboard-intro::after { display: none; }
+        .dashboard-kicker { color: #ad741c; font-size: .62rem; letter-spacing: .14em; }
+        .dashboard-intro h1 { color: #1c293b; font-size: clamp(1.5rem,2.4vw,2.1rem); font-weight: 700; letter-spacing: -.045em; }
+        .dashboard-intro p { color: #778397; font-size: .86rem; }
+        .intro-illustration { position: relative; display: grid; width: 102px; height: 102px; flex: none; place-items: center; border-radius: 28px; background: #fff4df; color: #d59a36; font-size: 2.6rem; transform: rotate(-5deg); }
+        .intro-illustration > span { position: absolute; right: -9px; bottom: -5px; display: grid; width: 38px; height: 38px; place-items: center; border: 4px solid #fff; border-radius: 50%; background: #1d9a72; color: #fff; font-size: .9rem; }
+        #view-shipments { display: flex; flex-direction: column; gap: 1.2rem !important; }
+        #view-shipments > .grid { grid-template-columns: repeat(4,minmax(0,1fr)); gap: .85rem !important; margin: 0 !important; }
+        #view-shipments > .grid > div { min-height: 102px; padding: 1rem 1.1rem !important; border: 1px solid #e5e9ef !important; border-radius: 14px !important; background: #fff !important; box-shadow: 0 3px 14px #18233406; }
+        #view-shipments > .grid > div::before { width: 3px; }
+        #view-shipments > .grid > div:hover { transform: translateY(-2px); box-shadow: 0 8px 22px #18233410; }
+        #view-shipments > .grid > div p { color: #7b8798 !important; font-size: .69rem !important; }
+        #view-shipments > .grid > div h3 { font-size: clamp(1.12rem,1.5vw,1.42rem) !important; }
+        #view-shipments > .grid > div > .flex > i { width: 36px; height: 36px; border-radius: 11px; }
+        #view-shipments > .bg-white.rounded-lg { border-color: #e5e9ef !important; border-radius: 16px !important; box-shadow: 0 5px 22px #18233408 !important; }
+        #view-shipments > .bg-white.rounded-lg > .p-6 { gap: 1rem; padding: 1.1rem 1.3rem !important; }
+        #view-shipments > .bg-white.rounded-lg > .p-6 > div:last-child { gap: .6rem; }
+        #view-shipments > .bg-white.rounded-lg h2 { font-size: .9rem !important; }
+        #view-shipments table { min-width: 900px; }
+        #view-shipments table th { font-size: .63rem !important; }
+        #tracking-table-body td { font-size: .78rem; }
+        #view-shipments > .bg-white.rounded-lg > .flex.border-t { padding: .85rem 1.3rem !important; }
+        #modal-add, #modal-history { backdrop-filter: blur(5px); background: #10182799 !important; }
+        #modal-add > div, #modal-history > div { border-radius: 18px !important; }
+        html.dark #app-content { background: #0e1521; }
+        html.dark .app-topbar { border-color: #283446; background: #141d2aee; }
+        html.dark .topbar-context strong { color: #e7edf5; }
+        html.dark .topbar-icon-button, html.dark .topbar-secondary-button { border-color: #334155; background: #1c2838; color: #d4dce7; }
+        html.dark .topbar-icon-button:hover, html.dark .topbar-secondary-button:hover { background: #26364b; }
+        html.dark .topbar-primary-button { border-color: #e4a83e; background: #e9ab45; color: #202b3a; }
+        html.dark .dashboard-intro { border-color: #283446; background: #151f2d; }
+        html.dark .dashboard-intro h1 { color: #edf2f8; }
+        html.dark .dashboard-intro p { color: #9caabe; }
+        html.dark .intro-illustration { background: #3a3020; }
+        html.dark .intro-illustration > span { border-color: #151f2d; }
+        html.dark #view-shipments > .grid > div, html.dark #view-shipments > .bg-white.rounded-lg { border-color: #29364a !important; background: #151f2d !important; }
+        html.dark #view-shipments > .grid > div h3, html.dark #view-shipments > .bg-white.rounded-lg h2 { color: #edf2f8 !important; }
+        html.dark #view-shipments > .grid > div p { color: #9caabe !important; }
+        html.dark #view-shipments > .bg-white.rounded-lg > .flex.border-t { border-color: #29364a !important; background: #121b28 !important; }
+        @media (min-width: 1024px) { #app-content:not(.hidden) { flex-direction: row; } }
+        @media (max-width: 1023px) {
+            .app-sidebar { position: relative; width: 100%; height: auto; flex: none; padding: .7rem 1rem; }
+            .sidebar-brand { padding: 0; }
+            .sidebar-brand-mark { width: 38px; height: 38px; }
+            .sidebar-label, .sidebar-bottom { display: none; }
+            .app-sidebar { flex-direction: row; align-items: center; justify-content: space-between; }
+            .sidebar-nav { margin: 0; }
+            .sidebar-link { width: auto; padding: .65rem .8rem; }
+            .sidebar-link.is-active { box-shadow: inset 0 -2px #e9ab45; }
+        }
+        @media (max-width: 700px) {
+            .app-topbar { min-height: 64px; padding: .65rem .85rem; }
+            .topbar-context { display: none; }
+            .topbar-actions { width: 100%; justify-content: flex-end; gap: .4rem; }
+            .topbar-icon-button, .topbar-secondary-button, .topbar-primary-button { min-height: 38px; padding: .5rem .62rem; font-size: .72rem; }
+            .dashboard-intro { min-height: 142px; padding: 1.2rem; }
+            .intro-illustration { width: 64px; height: 64px; border-radius: 20px; font-size: 1.7rem; }
+            .intro-illustration > span { width: 30px; height: 30px; font-size: .72rem; }
+            #view-shipments > .grid { grid-template-columns: repeat(2,minmax(0,1fr)); }
+            #view-shipments > .grid > div { min-height: 88px; padding: .8rem !important; }
+            #view-shipments > .grid > div > .flex > i { width: 30px; height: 30px; font-size: .8rem; }
+            #view-shipments > .bg-white.rounded-lg > .p-6 { align-items: stretch; }
+            #view-shipments > .bg-white.rounded-lg > .p-6 > div:last-child { flex-direction: column; width: 100%; }
+            #view-shipments > .bg-white.rounded-lg > .p-6 > div:last-child > div { width: 100%; }
+        }
     </style>
 </head>
 <body class="min-h-screen bg-[#FAF8F3] dark:bg-slate-950 transition-colors duration-300">
@@ -113,44 +212,41 @@
         </div>
     </div>
 
-    <div id="app-content" class="hidden">
-        <nav class="bg-slate-900 text-white shadow-lg border-b-2 border-amber-500">
-            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div class="flex items-center justify-between h-16">
-                    <div class="flex items-center gap-2">
-                        <i class="fas fa-box-open text-2xl text-amber-500"></i>
-                        <span class="text-xl font-bold tracking-tight">Suivi ESOA</span>
-                    </div>
-                    <div class="flex items-center gap-3">
-                        <button id="btn-theme-toggle" class="bg-slate-800 hover:bg-slate-700 text-white px-3 py-2 rounded-lg transition-all flex items-center gap-2 text-sm font-medium border border-slate-600">
-                            <i class="fas fa-moon"></i> <span class="hidden sm:inline">Mode Sombre</span>
-                        </button>
-                        <button id="btn-logout" class="bg-slate-800 hover:bg-slate-700 text-white px-3 py-2 rounded-lg transition-all flex items-center gap-2 text-sm font-medium border border-slate-600">
-                            <i class="fas fa-sign-out-alt"></i> <span class="hidden sm:inline">Déconnexion</span>
-                        </button>
-                        <button id="btn-export" class="bg-slate-800 hover:bg-slate-700 text-white px-3 py-2 rounded-lg transition-all flex items-center gap-2 text-sm font-medium border border-slate-600">
-                            <i class="fas fa-download"></i> <span class="hidden sm:inline">Export</span>
-                        </button>
-                        <button id="btn-add" class="bg-amber-500 text-slate-900 hover:bg-amber-400 px-4 py-2 rounded-lg transition-all flex items-center gap-2 text-sm font-bold">
-                            <i class="fas fa-plus"></i> <span class="hidden sm:inline">Ajouter un article</span>
-                        </button>
-                    </div>
-                </div>
+    <div id="app-content" class="hidden min-h-screen lg:flex">
+        <aside class="app-sidebar" aria-label="Navigation principale">
+            <a class="sidebar-brand" href="#dashboard" aria-label="ESOA, accueil">
+                <span class="sidebar-brand-mark"><i class="fas fa-boxes-stacked" aria-hidden="true"></i></span>
+                <span><strong>ESOA</strong><small>Suivi logistique</small></span>
+            </a>
+            <span class="sidebar-label">ESPACE DE TRAVAIL</span>
+            <nav class="sidebar-nav">
+                <button id="tab-shipments" type="button" class="sidebar-link is-active"><i class="fas fa-chart-pie" aria-hidden="true"></i><span>Vue d’ensemble</span></button>
+            </nav>
+            <div class="sidebar-bottom">
+                <div class="sidebar-help"><span class="sidebar-help-icon"><i class="fas fa-headset" aria-hidden="true"></i></span><span><strong>Besoin d’aide ?</strong><small>Contactez l’équipe ESOA</small></span></div>
+                <div class="sidebar-caption">GESTION DES EXPÉDITIONS</div>
             </div>
-        </nav>
+        </aside>
 
-        <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div class="app-main-column">
+            <header class="app-topbar">
+                <div class="topbar-context"><span class="topbar-eyebrow">ESPACE DE GESTION</span><strong>Tableau de bord</strong></div>
+                <div class="topbar-actions">
+                    <button id="btn-theme-toggle" class="topbar-icon-button" aria-label="Changer le thème" title="Changer le thème"><i class="fas fa-moon"></i><span class="hidden sm:inline">Thème</span></button>
+                    <button id="btn-export" class="topbar-secondary-button"><i class="fas fa-download" aria-hidden="true"></i><span class="hidden sm:inline">Exporter</span></button>
+                    <button id="btn-logout" class="topbar-icon-button" title="Déconnexion"><i class="fas fa-sign-out-alt" aria-hidden="true"></i><span class="hidden sm:inline">Quitter</span></button>
+                    <button id="btn-add" class="topbar-primary-button"><i class="fas fa-plus" aria-hidden="true"></i><span>Nouvel article</span></button>
+                </div>
+            </header>
+
+        <main id="dashboard" class="dashboard-main">
             <section class="dashboard-intro" aria-label="Présentation du tableau de bord">
-                <span class="dashboard-kicker"><i class="fas fa-boxes-stacked" aria-hidden="true"></i> ESOA · EXPÉDITIONS</span>
-                <h1>Vos expéditions, en un coup d’œil</h1>
-                <p>Suivez les articles, leur statut et les frais associés depuis un seul espace.</p>
+                <div><span class="dashboard-kicker"><i class="fas fa-sparkles" aria-hidden="true"></i> VOTRE ACTIVITÉ</span>
+                    <h1>Bonjour, voici vos expéditions.</h1>
+                    <p>Retrouvez en un seul endroit l’avancement des articles et les frais associés.</p>
+                </div>
+                <div class="intro-illustration" aria-hidden="true"><i class="fas fa-box"></i><span><i class="fas fa-location-dot"></i></span></div>
             </section>
-            <!-- Navigation Tabs -->
-            <div class="flex gap-2 mb-6 bg-slate-200 dark:bg-slate-800 p-1 rounded-xl w-fit">
-                <button id="tab-shipments" class="px-4 py-2 rounded-lg text-sm font-bold transition-all bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm">
-                    <i class="fas fa-truck mr-2"></i>Suivi
-                </button>
-            </div>
 
             <!-- Shipments View -->
             <div id="view-shipments" class="space-y-8">
@@ -325,6 +421,7 @@
             </div>
 
         </main>
+        </div>
 
         <!-- Shipment Modal -->
         <div id="modal-add" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50 p-4">
