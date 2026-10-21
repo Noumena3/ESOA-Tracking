@@ -12,6 +12,13 @@ export interface Shipment {
     frais: number;
     status: string;
     created_at?: string;
+    owner_id?: string;
+}
+
+export interface UserProfile {
+    id: string;
+    username: string;
+    role: 'admin' | 'staff';
 }
 
 export interface ShipmentFilters {
@@ -46,6 +53,16 @@ export interface AuditLogEntry {
 }
 
 export const supabaseClient = (window as any).supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+export async function getCurrentProfile(userId: string): Promise<UserProfile> {
+    const { data, error } = await supabaseClient
+        .from('profiles')
+        .select('id, username, role')
+        .eq('id', userId)
+        .single();
+    if (error) throw error;
+    return data as UserProfile;
+}
 
 function applyShipmentFilters(query: any, filters: ShipmentFilters): any {
     const search = filters.search.trim();
@@ -151,7 +168,18 @@ export async function deleteShipment(id: string): Promise<boolean> {
 }
 
 export async function insertShipment(shipment: Omit<Shipment, 'created_at'>): Promise<boolean> {
-    const { error } = await supabaseClient.from('shipments').insert([shipment]);
+    const { data: { user } } = await supabaseClient.auth.getUser();
+    if (!user) throw new Error('Session utilisateur introuvable.');
+    const { data: targetProfile, error: profileError } = await supabaseClient
+        .from('profiles')
+        .select('id')
+        .eq('username', shipment.username)
+        .maybeSingle();
+    if (profileError) throw profileError;
+    const { error } = await supabaseClient.from('shipments').insert([{
+        ...shipment,
+        owner_id: targetProfile?.id || user.id,
+    }]);
     if (error) throw error;
     return true;
 }
@@ -160,24 +188,5 @@ export async function deleteMultipleShipments(ids: string[]): Promise<boolean> {
     const { error } = await supabaseClient.from('shipments').delete().in('id', ids);
     if (error) throw error;
     return true;
-}
-
-export async function logEvent(action: string, shipmentId: string, details: any = {}): Promise<boolean> {
-    try {
-        const { data: { user } } = await supabaseClient.auth.getUser();
-        const username = user?.user_metadata?.full_name || user?.email || 'Unknown';
-
-        const { error } = await supabaseClient.from('audit_logs').insert([{
-            shipment_id: shipmentId,
-            action: action,
-            username: username,
-            details: details
-        }]);
-        if (error) throw error;
-        return true;
-    } catch (e) {
-        console.error("Logging error:", e);
-        return false;
-    }
 }
 

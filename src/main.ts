@@ -16,6 +16,30 @@ let currentPage = 1;
 let pageSize = Number(elements.pageSize.value) || 25;
 let searchDebounce: ReturnType<typeof setTimeout> | undefined;
 let latestLoadId = 0;
+let currentProfile: api.UserProfile | null = null;
+
+function applyProfile(profile: api.UserProfile): void {
+    currentProfile = profile;
+    const userFilterContainer = document.getElementById('user-filter-container');
+    const formUserField = document.getElementById('form-user-field');
+    const formUser = document.getElementById('form-user') as HTMLSelectElement;
+
+    if (profile.role === 'admin') {
+        userFilterContainer?.classList.remove('hidden');
+        formUserField?.classList.remove('hidden');
+        elements.userFilter.value = 'All';
+        formUser.value = profile.username;
+    } else {
+        userFilterContainer?.classList.add('hidden');
+        formUserField?.classList.add('hidden');
+        elements.userFilter.value = profile.username;
+        formUser.value = profile.username;
+    }
+}
+
+async function authorizeProfile(userId: string): Promise<void> {
+    applyProfile(await api.getCurrentProfile(userId));
+}
 
 function currentFilters(): api.ShipmentFilters {
     return {
@@ -45,14 +69,6 @@ async function handleViewHistory(shipment: Shipment): Promise<void> {
         elements.historyList.textContent = 'Impossible de charger l’historique.';
         alert("Erreur lors du chargement de l’historique : " + err.message);
     }
-}
-
-async function logEventOrWarn(action: string, shipmentId: string, details: Record<string, unknown> = {}): Promise<boolean> {
-    const logged = await api.logEvent(action, shipmentId, details);
-    if (!logged) {
-        alert("L’action a été effectuée, mais son ajout à l’historique a échoué.");
-    }
-    return logged;
 }
 
 async function refreshData(requestedPage = currentPage): Promise<void> {
@@ -102,7 +118,6 @@ async function handleChangeStatus(id: string, newStatus: string): Promise<void> 
     try {
         updateLoading(true);
         await api.updateShipment(id, { status: newStatus });
-        await logEventOrWarn('STATUS_CHANGE', id, { old: shipment.status, new: newStatus });
         await refreshData();
     } catch (err: any) {
         alert("Erreur : " + err.message);
@@ -116,7 +131,6 @@ async function handleDeleteShipment(id: string): Promise<void> {
         try {
             updateLoading(true);
             await api.deleteShipment(id);
-            await logEventOrWarn('DELETE', id);
             selectedShipments.delete(id);
             updateBatchBar(selectedShipments.size);
             await refreshData();
@@ -137,7 +151,6 @@ async function handleUpdateFrais(id: string, value: string): Promise<void> {
     }
     try {
         await api.updateShipment(id, { frais: newValue });
-        await logEventOrWarn('FRAIS_CHANGE', id, { newValue });
         await refreshData();
     } catch (err: any) {
         alert("Erreur : " + err.message);
@@ -149,6 +162,7 @@ async function init(): Promise<void> {
     try {
         const session = await auth.getSession();
         if (session) {
+            await authorizeProfile(session.user.id);
             elements.loginOverlay.classList.add('hidden');
             elements.loginOverlay.classList.remove('flex');
             elements.appContent.classList.remove('hidden');
@@ -161,6 +175,12 @@ async function init(): Promise<void> {
         }
     } catch (e: any) {
         console.error("Init error:", e);
+        await auth.signOut().catch(() => undefined);
+        elements.loginError.textContent = 'Ce compte ne possède pas de profil ESOA autorisé. Contactez l’administrateur.';
+        elements.loginError.classList.remove('hidden');
+        elements.loginOverlay.classList.remove('hidden');
+        elements.loginOverlay.classList.add('flex');
+        elements.appContent.classList.add('hidden');
     }
 }
 
@@ -171,12 +191,14 @@ elements.loginForm.addEventListener('submit', async (e) => {
     const password = (document.getElementById('login-password') as HTMLInputElement).value;
     elements.loginError.classList.add('hidden');
     try {
-        await auth.signIn(email, password);
+        const { user } = await auth.signIn(email, password);
+        await authorizeProfile(user.id);
         elements.loginOverlay.classList.add('hidden');
         elements.loginOverlay.classList.remove('flex');
         elements.appContent.classList.remove('hidden');
         await refreshData();
     } catch (err: any) {
+        await auth.signOut().catch(() => undefined);
         elements.loginError.innerText = err.message;
         elements.loginError.classList.remove('hidden');
     }
@@ -188,6 +210,7 @@ elements.btnLogout.addEventListener('click', async () => {
         elements.loginOverlay.classList.remove('hidden');
         elements.loginOverlay.classList.add('flex');
         elements.appContent.classList.add('hidden');
+        currentProfile = null;
         shipments = [];
         selectedShipments.clear();
         updateBatchBar(0);
@@ -262,7 +285,6 @@ elements.addForm.addEventListener('submit', async (e) => {
         updateLoading(true);
 
         await api.insertShipment(newShipment);
-        await logEventOrWarn('CREATE', newShipment.id, { article });
 
         await refreshData();
 
@@ -319,12 +341,9 @@ elements.btnBatchStatus.addEventListener('click', async () => {
 
     try {
         updateLoading(true);
-        let allEventsLogged = true;
         for (const id of selectedShipments) {
             await api.updateShipment(id, { status: newStatus });
-            if (!await api.logEvent('STATUS_CHANGE', id, { newStatus })) allEventsLogged = false;
         }
-        if (!allEventsLogged) alert("Les statuts ont été modifiés, mais une partie de l’historique n’a pas été enregistrée.");
         selectedShipments.clear();
         updateBatchBar(0);
         await refreshData();
@@ -342,11 +361,6 @@ elements.btnBatchDelete.addEventListener('click', async () => {
         updateLoading(true);
         const idsToDelete = Array.from(selectedShipments);
         await api.deleteMultipleShipments(idsToDelete);
-        let allEventsLogged = true;
-        for (const id of idsToDelete) {
-            if (!await api.logEvent('DELETE', id)) allEventsLogged = false;
-        }
-        if (!allEventsLogged) alert("Les articles ont été supprimés, mais une partie de l’historique n’a pas été enregistrée.");
         selectedShipments.clear();
         updateBatchBar(0);
         await refreshData();

@@ -32,6 +32,10 @@ Pour générer la version de production, utiliser `npm run build` ; pour la pré
 
 Le client utilise les tables Supabase `shipments` et `audit_logs`. Les expéditions comprennent notamment un identifiant, un utilisateur, un article, des frais et un statut. Le nom de l’article est saisi librement lors de la création d’une expédition. L’accès aux tables et aux comptes dépend de la configuration Auth et des politiques d’accès de votre projet Supabase.
 
+## Accès par profil
+
+La migration `20261015000000_scope_shipments_to_profiles.sql` lie chaque compte Supabase à un profil `admin` ou `staff` et applique les droits dans PostgreSQL avec RLS. Le profil Noumena est le seul provisionné par cette migration. Un compte Auth sans ligne correspondante dans `public.profiles` n’a pas accès aux expéditions. Pour réactiver un membre plus tard, créer d’abord son compte dans Supabase Auth, puis ajouter son UUID avec le nom exact `Eric` ou `Mika` et le rôle `staff` dans `public.profiles`. Le déclencheur SQL réattribue alors à ce compte les expéditions et l’historique portant ce nom. La migration doit être exécutée dans le SQL Editor Supabase avant de déployer la version de l’application qui utilise les profils.
+
 ## État du dépôt
 
 Le point d’entrée déclaré est la version TypeScript (`src/main.ts`). Des scripts JavaScript plus anciens et des doublons dont le nom se termine par un accent grave sont également présents à la racine ou dans `src/` ; ils ne sont pas le point d’entrée indiqué dans `index.html`. Au moment de la rédaction, `src/inventoryApi.ts` apparaît comme supprimé dans l’état Git local : cette suppression préexistante n’a pas été modifiée.

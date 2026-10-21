@@ -229,7 +229,7 @@ export function renderShipmentHistory(shipment: Shipment, entries: import('./api
         const heading = document.createElement('div');
         heading.className = 'flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2';
         const action = document.createElement('strong');
-        const actionNames: Record<string, string> = { CREATE: 'Article ajouté', STATUS_CHANGE: 'Statut modifié', DELETE: 'Article supprimé', FRAIS_CHANGE: 'Frais modifiés' };
+        const actionNames: Record<string, string> = { CREATE: 'Article ajouté', STATUS_CHANGE: 'Statut modifié', DELETE: 'Article supprimé', FRAIS_CHANGE: 'Frais modifiés', ARTICLE_CHANGE: 'Article modifié' };
         action.className = 'inline-flex items-center gap-2 text-sm font-semibold text-gray-900 dark:text-white';
         const actionIcon = document.createElement('i');
         actionIcon.className = `fas ${entry.action === 'CREATE' ? 'fa-circle-plus text-emerald-500' : entry.action === 'DELETE' ? 'fa-trash text-red-500' : entry.action === 'STATUS_CHANGE' ? 'fa-arrows-rotate text-blue-500' : 'fa-pen-to-square text-amber-500'}`;
@@ -252,7 +252,7 @@ export function renderShipmentHistory(shipment: Shipment, entries: import('./api
         if (entry.details && Object.keys(entry.details).length > 0) {
             const details = document.createElement('div');
             details.className = 'mt-3 grid gap-2 border-t border-gray-100 pt-3 dark:border-slate-700';
-            const labels: Record<string, string> = { article: 'Article', old: 'Ancien statut', new: 'Nouveau statut', newValue: 'Nouveaux frais' };
+            const labels: Record<string, string> = { article: 'Article', old: 'Ancienne valeur', new: 'Nouvelle valeur', oldValue: 'Anciens frais', newValue: 'Nouveaux frais', status: 'Statut au moment de la suppression' };
             for (const [key, value] of Object.entries(entry.details)) {
                 const row = document.createElement('div');
                 row.className = 'flex flex-wrap items-center gap-x-2 gap-y-1 text-sm';
