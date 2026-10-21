@@ -157,7 +157,7 @@ export function render(
                 </td>
                 <td data-label="ID Tracking" class="px-6 py-4 font-medium text-gray-900 font-mono-tag">${escapeHtml(s.id)}</td>
                 <td data-label="Article" class="px-6 py-4">${escapeHtml(s.article)}</td>
-                <td data-label="Envoi" class="px-6 py-4">${s.shipping_method === 'Normal' ? 'Normal (avion)' : s.shipping_method === 'Maritime' ? 'Maritime' : 'À préciser'}</td>
+                <td data-label="Envoi" class="px-6 py-4">${s.shipping_method === 'Normal' ? 'Normal' : s.shipping_method === 'Maritime' ? 'Maritime' : 'À préciser'}</td>
                 <td data-label="Ajouté le" class="px-6 py-4 whitespace-nowrap">${escapeHtml(s.created_at ? new Date(s.created_at).toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' }) : '—')}</td>
                 <td data-label="Frais" class="px-6 py-4">
                     <div class="flex items-center gap-2">
