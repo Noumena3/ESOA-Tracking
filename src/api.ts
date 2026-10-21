@@ -13,6 +13,7 @@ export interface Shipment {
     status: string;
     created_at?: string;
     owner_id?: string;
+    transit_since?: string | null;
 }
 
 export interface UserProfile {
@@ -27,6 +28,7 @@ export interface ShipmentFilters {
     status: string;
     createdFrom: string;
     createdTo: string;
+    transitBefore: string;
 }
 
 export interface ShipmentSummary {
@@ -87,6 +89,7 @@ function applyShipmentFilters(query: any, filters: ShipmentFilters): any {
             query = query.lt('created_at', endExclusive.toISOString());
         }
     }
+    if (filters.transitBefore) query = query.lt('transit_since', filters.transitBefore);
     return query;
 }
 
@@ -119,7 +122,7 @@ export async function getShipments(
 }
 
 export async function getShipmentSummary(filters: ShipmentFilters): Promise<ShipmentSummary> {
-    if (filters.createdFrom || filters.createdTo) {
+    if (filters.createdFrom || filters.createdTo || filters.transitBefore) {
         const matchingRows: Array<{ status: string; frais: number }> = [];
         for (let offset = 0; ; offset += 1000) {
             let query = supabaseClient.from('shipments').select('status, frais');
@@ -167,6 +170,19 @@ export async function getShipmentSummary(filters: ShipmentFilters): Promise<Ship
         collectedFees: Number(summary?.collected_frais || 0),
         transitFees: Number(summary?.transit_frais || 0),
     };
+}
+
+export async function getTransitAlertCount(days: number, username: string): Promise<number> {
+    const cutoff = new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString();
+    let query = supabaseClient
+        .from('shipments')
+        .select('id', { count: 'exact', head: true })
+        .eq('status', 'En transit')
+        .lt('transit_since', cutoff);
+    if (username !== 'All') query = query.eq('username', username);
+    const { count, error } = await query;
+    if (error) throw error;
+    return count || 0;
 }
 
 export async function getAllShipments(filters: ShipmentFilters): Promise<Shipment[]> {

@@ -185,6 +185,12 @@
         .sidebar-stat-row:nth-child(2) strong { color: #79c8e7; }
         .sidebar-stat-row:nth-child(3) strong { color: #f1c36f; }
         .sidebar-stat-row:nth-child(4) strong { color: #70d2a8; }
+        .transit-alert-button { width: 100%; border: 0; background: transparent; color: inherit; text-align: left; cursor: pointer; }
+        .transit-alert-button:hover, .transit-alert-button.is-active { background: #ffffff0c; }
+        .transit-alert-button > span, .transit-alert-button > span span { color: #f2a2a7; }
+        .transit-alert-button strong { color: #ff8b92 !important; }
+        .transit-alert-setting { display: flex; align-items: center; justify-content: space-between; gap: .4rem; padding: .35rem 0 .15rem; color: #8997aa; font-size: .66rem; }
+        #transit-alert-threshold { max-width: 90px; border: 1px solid #ffffff24; border-radius: 7px; padding: .23rem .35rem; background: #182436; color: #e2e8f0; font-size: .68rem; }
         .fees-group { padding-top: .95rem; border-top: 1px solid #ffffff16; }
         .fees-group .sidebar-stat-row strong { color: #f6f8fb; }
         .fees-group .sidebar-stat-row:nth-child(2) strong { color: #79c8e7; }
@@ -282,6 +288,15 @@
                         <div class="sidebar-stat-row"><span><i class="fas fa-check-circle" aria-hidden="true"></i>Arrivés</span><strong id="stat-arrived">0</strong></div>
                         <div class="sidebar-stat-row"><span><i class="fas fa-truck" aria-hidden="true"></i>En transit</span><strong id="stat-transit">0</strong></div>
                         <div class="sidebar-stat-row"><span><i class="fas fa-warehouse" aria-hidden="true"></i>Récupérés</span><strong id="stat-recupere">0</strong></div>
+                        <button id="transit-alert-button" type="button" class="sidebar-stat-row transit-alert-button" aria-pressed="false" title="Afficher les expéditions à relancer">
+                            <span><i class="fas fa-triangle-exclamation" aria-hidden="true"></i><span id="transit-alert-label">À relancer · 7+ j</span></span><strong id="transit-alert-count">0</strong>
+                        </button>
+                        <div class="transit-alert-setting">
+                            <label for="transit-alert-threshold">Alerter après</label>
+                            <select id="transit-alert-threshold" aria-label="Seuil d’alerte pour les expéditions en transit">
+                                <option value="3">3 jours</option><option value="5">5 jours</option><option value="7" selected>7 jours</option><option value="10">10 jours</option><option value="14">14 jours</option><option value="30">30 jours</option>
+                            </select>
+                        </div>
                     </div>
                 </div>
                 <div class="sidebar-stat-group fees-group">

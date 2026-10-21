@@ -28,6 +28,10 @@ export const elements = {
     statTotal: document.getElementById('stat-total') as HTMLElement,
     statArrived: document.getElementById('stat-arrived') as HTMLElement,
     statTransit: document.getElementById('stat-transit') as HTMLElement,
+    transitAlertButton: document.getElementById('transit-alert-button') as HTMLButtonElement,
+    transitAlertLabel: document.getElementById('transit-alert-label') as HTMLElement,
+    transitAlertCount: document.getElementById('transit-alert-count') as HTMLElement,
+    transitAlertThreshold: document.getElementById('transit-alert-threshold') as HTMLSelectElement,
     statRecupere: document.getElementById('stat-recupere') as HTMLElement,
     statTotalFrais: document.getElementById('stat-total-frais') as HTMLElement,
     statFraisLivres: document.getElementById('stat-frais-livres') as HTMLElement,
@@ -211,6 +215,13 @@ export function render(
     elements.statFraisLivres.innerText = summary.arrivedFees.toLocaleString() + " Ar";
     elements.statFraisRecupere.innerText = summary.collectedFees.toLocaleString() + " Ar";
     elements.statFraisTransit.innerText = summary.transitFees.toLocaleString() + " Ar";
+}
+
+export function updateTransitAlert(count: number, days: number, active: boolean): void {
+    elements.transitAlertLabel.textContent = `À relancer · ${days}+ j`;
+    elements.transitAlertCount.textContent = count.toLocaleString('fr-FR');
+    elements.transitAlertButton.setAttribute('aria-pressed', String(active));
+    elements.transitAlertButton.classList.toggle('is-active', active);
 }
 
 export function renderShipmentHistory(shipment: Shipment, entries: import('./api.ts').AuditLogEntry[]): void {

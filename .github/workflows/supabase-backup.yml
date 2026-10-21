@@ -1,0 +1,52 @@
+name: Supabase database backup
+
+on:
+  schedule:
+    - cron: '17 2 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  backup:
+    if: github.event.repository.private == true
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check database connection secret
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: |
+          if [ -z "$SUPABASE_DB_URL" ]; then
+            echo "::error::Add the SUPABASE_DB_URL Actions secret before running backups."
+            exit 1
+          fi
+
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Dump database roles, schema, and data
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: |
+          mkdir -p backups
+          supabase db dump --db-url "$SUPABASE_DB_URL" -f backups/roles.sql --role-only
+          supabase db dump --db-url "$SUPABASE_DB_URL" -f backups/schema.sql
+          supabase db dump --db-url "$SUPABASE_DB_URL" -f backups/data.sql --data-only --use-copy -x "storage.buckets_vectors" -x "storage.vector_indexes"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: esoa-database-backup-${{ github.run_id }}
+          path: backups/*.sql
+          if-no-files-found: error
+          retention-days: 30
+
+  refuse-public-repository:
+    if: github.event.repository.private != true
+    runs-on: ubuntu-latest
+    steps:
+      - name: Keep database backups out of public repositories
+        run: |
+          echo "::error::Backups are disabled because this GitHub repository is public. Make it private before enabling off-site data backups."
+          exit 1

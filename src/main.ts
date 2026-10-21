@@ -1,6 +1,6 @@
 import * as api from './api.ts';
 import * as auth from './auth.ts';
-import { elements, render, renderShipmentHistory, updateBatchBar, applyTheme, updateLoading, exportToCSV } from './ui.ts';
+import { elements, render, renderShipmentHistory, updateBatchBar, applyTheme, updateLoading, updateTransitAlert, exportToCSV } from './ui.ts';
 import { Shipment } from './api.ts';
 import { isNonNegativeInteger, isShipmentStatus } from './domain.ts';
 
@@ -17,6 +17,22 @@ let pageSize = Number(elements.pageSize.value) || 25;
 let searchDebounce: ReturnType<typeof setTimeout> | undefined;
 let latestLoadId = 0;
 let currentProfile: api.UserProfile | null = null;
+const transitAlertDaysOptions = [3, 5, 7, 10, 14, 30];
+const savedTransitAlertDays = Number(localStorage.getItem('esoa-transit-alert-days'));
+let transitAlertDays = transitAlertDaysOptions.includes(savedTransitAlertDays) ? savedTransitAlertDays : 7;
+let transitAlertCount = 0;
+let delayedTransitFilterActive = false;
+elements.transitAlertThreshold.value = String(transitAlertDays);
+
+function refreshTransitAlertDisplay(): void {
+    updateTransitAlert(transitAlertCount, transitAlertDays, delayedTransitFilterActive);
+}
+
+function clearDelayedTransitFilter(): void {
+    if (!delayedTransitFilterActive) return;
+    delayedTransitFilterActive = false;
+    refreshTransitAlertDisplay();
+}
 
 function applyProfile(profile: api.UserProfile): void {
     currentProfile = profile;
@@ -52,10 +68,10 @@ function currentFilters(): api.ShipmentFilters {
     let createdFrom = '';
     let createdTo = '';
     const period = elements.dateRangeFilter.value;
-    if (period === 'custom') {
+    if (!delayedTransitFilterActive && period === 'custom') {
         createdFrom = elements.dateFrom.value;
         createdTo = elements.dateTo.value;
-    } else if (period !== 'all') {
+    } else if (!delayedTransitFilterActive && period !== 'all') {
         const start = new Date(today.getFullYear(), today.getMonth(), today.getDate());
         if (period === 'last7') start.setDate(start.getDate() - 6);
         else if (period === 'thisMonth') start.setDate(1);
@@ -67,9 +83,12 @@ function currentFilters(): api.ShipmentFilters {
     return {
         search: elements.searchInput.value,
         username: elements.userFilter.value,
-        status: elements.statusFilter.value,
-        createdFrom,
-        createdTo,
+        status: delayedTransitFilterActive ? 'En transit' : elements.statusFilter.value,
+        createdFrom: delayedTransitFilterActive ? '' : createdFrom,
+        createdTo: delayedTransitFilterActive ? '' : createdTo,
+        transitBefore: delayedTransitFilterActive
+            ? new Date(Date.now() - transitAlertDays * 24 * 60 * 60 * 1000).toISOString()
+            : '',
     };
 }
 
@@ -100,9 +119,10 @@ async function refreshData(requestedPage = currentPage): Promise<void> {
     try {
         updateLoading(true);
         const filters = currentFilters();
-        const [result, summary] = await Promise.all([
+        const [result, summary, alertCount] = await Promise.all([
             api.getShipments(filters, requestedPage, pageSize, sortState),
             api.getShipmentSummary(filters),
+            api.getTransitAlertCount(transitAlertDays, filters.username),
         ]);
         if (loadId !== latestLoadId) return;
         totalCount = result.count;
@@ -117,6 +137,8 @@ async function refreshData(requestedPage = currentPage): Promise<void> {
             shipments = result.data;
         }
         shipmentSummary = summary;
+        transitAlertCount = alertCount;
+        refreshTransitAlertDisplay();
         renderCurrentPage();
     } catch (err: any) {
         if (loadId === latestLoadId) alert("Erreur de connexion : " + err.message);
@@ -323,17 +345,37 @@ elements.addForm.addEventListener('submit', async (e) => {
 });
 
 elements.searchInput.addEventListener('input', () => {
+    clearDelayedTransitFilter();
     clearTimeout(searchDebounce);
     searchDebounce = setTimeout(() => { void refreshData(1); }, 250);
 });
-elements.userFilter.addEventListener('change', () => { void refreshData(1); });
-elements.statusFilter.addEventListener('change', () => { void refreshData(1); });
+elements.userFilter.addEventListener('change', () => { clearDelayedTransitFilter(); void refreshData(1); });
+elements.statusFilter.addEventListener('change', () => { clearDelayedTransitFilter(); void refreshData(1); });
 elements.dateRangeFilter.addEventListener('change', () => {
+    clearDelayedTransitFilter();
     elements.customDateRange.classList.toggle('hidden', elements.dateRangeFilter.value !== 'custom');
     void refreshData(1);
 });
-elements.dateFrom.addEventListener('change', () => { if (elements.dateRangeFilter.value === 'custom') void refreshData(1); });
-elements.dateTo.addEventListener('change', () => { if (elements.dateRangeFilter.value === 'custom') void refreshData(1); });
+elements.dateFrom.addEventListener('change', () => { clearDelayedTransitFilter(); if (elements.dateRangeFilter.value === 'custom') void refreshData(1); });
+elements.dateTo.addEventListener('change', () => { clearDelayedTransitFilter(); if (elements.dateRangeFilter.value === 'custom') void refreshData(1); });
+elements.transitAlertButton.addEventListener('click', () => {
+    delayedTransitFilterActive = !delayedTransitFilterActive;
+    if (delayedTransitFilterActive) {
+        elements.searchInput.value = '';
+        elements.dateRangeFilter.value = 'all';
+        elements.dateFrom.value = '';
+        elements.dateTo.value = '';
+        elements.customDateRange.classList.add('hidden');
+    }
+    refreshTransitAlertDisplay();
+    void refreshData(1);
+});
+elements.transitAlertThreshold.addEventListener('change', () => {
+    transitAlertDays = Number(elements.transitAlertThreshold.value);
+    localStorage.setItem('esoa-transit-alert-days', String(transitAlertDays));
+    refreshTransitAlertDisplay();
+    void refreshData(1);
+});
 elements.pageSize.addEventListener('change', () => {
     pageSize = Number(elements.pageSize.value) || 25;
     void refreshData(1);
