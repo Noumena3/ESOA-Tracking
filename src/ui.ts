@@ -153,8 +153,8 @@ export function render(
                 <td class="px-6 py-4 whitespace-nowrap">${escapeHtml(s.created_at ? new Date(s.created_at).toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' }) : '—')}</td>
                 <td class="px-6 py-4">
                     <div class="flex items-center gap-2">
-                        <input type="number" value="${escapeHtml(s.frais)}" class="w-24 px-2 py-1 border border-gray-200 rounded focus:ring-2 focus:ring-amber-500 outline-none text-base font-semibold font-mono-tag frais-input" data-id="${escapeHtml(s.id)}">
-                        <span class="text-sm text-gray-500">Ar</span>
+                        <input type="number" value="${escapeHtml(s.frais)}" class="w-24 px-2 py-1 border border-gray-200 rounded focus:ring-2 focus:ring-amber-500 outline-none text-sm font-medium font-mono-tag frais-input" data-id="${escapeHtml(s.id)}">
+                        <span class="text-xs text-gray-500">Ar</span>
                     </div>
                 </td>
                 <td class="px-6 py-4">
