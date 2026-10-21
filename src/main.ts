@@ -17,15 +17,26 @@ let pageSize = Number(elements.pageSize.value) || 25;
 let searchDebounce: ReturnType<typeof setTimeout> | undefined;
 let latestLoadId = 0;
 let currentProfile: api.UserProfile | null = null;
-const transitAlertDaysOptions = [3, 5, 7, 10, 14, 30];
-const savedTransitAlertDays = Number(localStorage.getItem('esoa-transit-alert-days'));
-let transitAlertDays = transitAlertDaysOptions.includes(savedTransitAlertDays) ? savedTransitAlertDays : 7;
 let transitAlertCount = 0;
 let delayedTransitFilterActive = false;
-elements.transitAlertThreshold.value = String(transitAlertDays);
 
 function refreshTransitAlertDisplay(): void {
-    updateTransitAlert(transitAlertCount, transitAlertDays, delayedTransitFilterActive);
+    updateTransitAlert(transitAlertCount, delayedTransitFilterActive);
+}
+
+function getTransitAlertCutoffs(): { normal: string; maritime: string } {
+    const now = new Date();
+    const maritime = new Date(now);
+    const dayOfMonth = maritime.getDate();
+    maritime.setDate(1);
+    maritime.setMonth(maritime.getMonth() - 3);
+    const lastDayOfTargetMonth = new Date(maritime.getFullYear(), maritime.getMonth() + 1, 0).getDate();
+    maritime.setDate(Math.min(dayOfMonth, lastDayOfTargetMonth));
+    maritime.setDate(maritime.getDate() - 15);
+    return {
+        normal: new Date(now.getTime() - 28 * 24 * 60 * 60 * 1000).toISOString(),
+        maritime: maritime.toISOString(),
+    };
 }
 
 function clearDelayedTransitFilter(): void {
@@ -86,9 +97,9 @@ function currentFilters(): api.ShipmentFilters {
         status: delayedTransitFilterActive ? 'En transit' : elements.statusFilter.value,
         createdFrom: delayedTransitFilterActive ? '' : createdFrom,
         createdTo: delayedTransitFilterActive ? '' : createdTo,
-        transitBefore: delayedTransitFilterActive
-            ? new Date(Date.now() - transitAlertDays * 24 * 60 * 60 * 1000).toISOString()
-            : '',
+        transitBefore: '',
+        transitNormalBefore: delayedTransitFilterActive ? getTransitAlertCutoffs().normal : '',
+        transitMaritimeBefore: delayedTransitFilterActive ? getTransitAlertCutoffs().maritime : '',
     };
 }
 
@@ -122,7 +133,7 @@ async function refreshData(requestedPage = currentPage): Promise<void> {
         const [result, summary, alertCount] = await Promise.all([
             api.getShipments(filters, requestedPage, pageSize, sortState),
             api.getShipmentSummary(filters),
-            api.getTransitAlertCount(transitAlertDays, filters.username),
+            api.getTransitAlertCount(filters.username),
         ]);
         if (loadId !== latestLoadId) return;
         totalCount = result.count;
@@ -317,6 +328,7 @@ elements.addForm.addEventListener('submit', async (e) => {
         article,
         frais: fraisValue,
         status: (document.getElementById('form-status') as HTMLSelectElement).value,
+        shipping_method: (document.getElementById('form-shipping-method') as HTMLSelectElement).value as 'Normal' | 'Maritime',
     };
     if (!isShipmentStatus(newShipment.status)) {
         alert("Veuillez choisir un statut valide.");
@@ -367,12 +379,6 @@ elements.transitAlertButton.addEventListener('click', () => {
         elements.dateTo.value = '';
         elements.customDateRange.classList.add('hidden');
     }
-    refreshTransitAlertDisplay();
-    void refreshData(1);
-});
-elements.transitAlertThreshold.addEventListener('change', () => {
-    transitAlertDays = Number(elements.transitAlertThreshold.value);
-    localStorage.setItem('esoa-transit-alert-days', String(transitAlertDays));
     refreshTransitAlertDisplay();
     void refreshData(1);
 });

@@ -11,6 +11,7 @@ export interface Shipment {
     article: string;
     frais: number;
     status: string;
+    shipping_method?: 'Normal' | 'Maritime' | null;
     created_at?: string;
     owner_id?: string;
     transit_since?: string | null;
@@ -29,6 +30,8 @@ export interface ShipmentFilters {
     createdFrom: string;
     createdTo: string;
     transitBefore: string;
+    transitNormalBefore?: string;
+    transitMaritimeBefore?: string;
 }
 
 export interface ShipmentSummary {
@@ -90,6 +93,9 @@ function applyShipmentFilters(query: any, filters: ShipmentFilters): any {
         }
     }
     if (filters.transitBefore) query = query.lt('transit_since', filters.transitBefore);
+    if (filters.transitNormalBefore && filters.transitMaritimeBefore) {
+        query = query.or(`and(shipping_method.eq.Normal,transit_since.lt.${filters.transitNormalBefore}),and(shipping_method.eq.Maritime,transit_since.lt.${filters.transitMaritimeBefore})`);
+    }
     return query;
 }
 
@@ -122,7 +128,7 @@ export async function getShipments(
 }
 
 export async function getShipmentSummary(filters: ShipmentFilters): Promise<ShipmentSummary> {
-    if (filters.createdFrom || filters.createdTo || filters.transitBefore) {
+    if (filters.createdFrom || filters.createdTo || filters.transitBefore || filters.transitNormalBefore || filters.transitMaritimeBefore) {
         const matchingRows: Array<{ status: string; frais: number }> = [];
         for (let offset = 0; ; offset += 1000) {
             let query = supabaseClient.from('shipments').select('status, frais');
@@ -172,17 +178,34 @@ export async function getShipmentSummary(filters: ShipmentFilters): Promise<Ship
     };
 }
 
-export async function getTransitAlertCount(days: number, username: string): Promise<number> {
-    const cutoff = new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString();
-    let query = supabaseClient
-        .from('shipments')
-        .select('id', { count: 'exact', head: true })
-        .eq('status', 'En transit')
-        .lt('transit_since', cutoff);
-    if (username !== 'All') query = query.eq('username', username);
-    const { count, error } = await query;
-    if (error) throw error;
-    return count || 0;
+export async function getTransitAlertCount(username: string): Promise<number> {
+    const now = new Date();
+    const normalCutoff = new Date(now.getTime() - 28 * 24 * 60 * 60 * 1000).toISOString();
+    const maritimeDate = new Date(now);
+    const dayOfMonth = maritimeDate.getDate();
+    maritimeDate.setDate(1);
+    maritimeDate.setMonth(maritimeDate.getMonth() - 3);
+    const lastDayOfTargetMonth = new Date(maritimeDate.getFullYear(), maritimeDate.getMonth() + 1, 0).getDate();
+    maritimeDate.setDate(Math.min(dayOfMonth, lastDayOfTargetMonth));
+    maritimeDate.setDate(maritimeDate.getDate() - 15);
+    const maritimeCutoff = maritimeDate.toISOString();
+    const countForMethod = async (method: 'Normal' | 'Maritime', cutoff: string): Promise<number> => {
+        let query = supabaseClient
+            .from('shipments')
+            .select('id', { count: 'exact', head: true })
+            .eq('status', 'En transit')
+            .eq('shipping_method', method)
+            .lt('transit_since', cutoff);
+        if (username !== 'All') query = query.eq('username', username);
+        const { count, error } = await query;
+        if (error) throw error;
+        return count || 0;
+    };
+    const [normalCount, maritimeCount] = await Promise.all([
+        countForMethod('Normal', normalCutoff),
+        countForMethod('Maritime', maritimeCutoff),
+    ]);
+    return normalCount + maritimeCount;
 }
 
 export async function getAllShipments(filters: ShipmentFilters): Promise<Shipment[]> {

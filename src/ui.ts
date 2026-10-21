@@ -31,7 +31,6 @@ export const elements = {
     transitAlertButton: document.getElementById('transit-alert-button') as HTMLButtonElement,
     transitAlertLabel: document.getElementById('transit-alert-label') as HTMLElement,
     transitAlertCount: document.getElementById('transit-alert-count') as HTMLElement,
-    transitAlertThreshold: document.getElementById('transit-alert-threshold') as HTMLSelectElement,
     statRecupere: document.getElementById('stat-recupere') as HTMLElement,
     statTotalFrais: document.getElementById('stat-total-frais') as HTMLElement,
     statFraisLivres: document.getElementById('stat-frais-livres') as HTMLElement,
@@ -125,7 +124,7 @@ export function render(
     if (shipments.length === 0) {
         tableBody.innerHTML = `
             <tr class="empty-state-row">
-                <td colspan="8" class="px-6 py-12 text-center">
+                <td colspan="9" class="px-6 py-12 text-center">
                     <div class="flex flex-col items-center justify-center text-gray-400">
                         <i class="fas fa-box-open text-4xl mb-3"></i>
                         <p class="text-lg font-medium">Aucun article trouvé</p>
@@ -158,6 +157,7 @@ export function render(
                 </td>
                 <td data-label="ID Tracking" class="px-6 py-4 font-medium text-gray-900 font-mono-tag">${escapeHtml(s.id)}</td>
                 <td data-label="Article" class="px-6 py-4">${escapeHtml(s.article)}</td>
+                <td data-label="Envoi" class="px-6 py-4">${s.shipping_method === 'Normal' ? 'Normal (avion)' : s.shipping_method === 'Maritime' ? 'Maritime' : 'À préciser'}</td>
                 <td data-label="Ajouté le" class="px-6 py-4 whitespace-nowrap">${escapeHtml(s.created_at ? new Date(s.created_at).toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' }) : '—')}</td>
                 <td data-label="Frais" class="px-6 py-4">
                     <div class="flex items-center gap-2">
@@ -217,8 +217,8 @@ export function render(
     elements.statFraisTransit.innerText = summary.transitFees.toLocaleString() + " Ar";
 }
 
-export function updateTransitAlert(count: number, days: number, active: boolean): void {
-    elements.transitAlertLabel.textContent = `À relancer · ${days}+ j`;
+export function updateTransitAlert(count: number, active: boolean): void {
+    elements.transitAlertLabel.textContent = 'À relancer';
     elements.transitAlertCount.textContent = count.toLocaleString('fr-FR');
     elements.transitAlertButton.setAttribute('aria-pressed', String(active));
     elements.transitAlertButton.classList.toggle('is-active', active);
@@ -292,11 +292,11 @@ export function exportToCSV(shipments: Shipment[]): void {
         alert("Aucune donnée à exporter.");
         return;
     }
-    const headers = ["Utilisateur", "ID Tracking", "Article", "Ajouté le", "Frais Transit", "Status"];
+    const headers = ["Utilisateur", "ID Tracking", "Article", "Mode d’envoi", "Ajouté le", "Frais Transit", "Status"];
     const csvRows = [headers.join(",")];
     for (const s of shipments) {
         const createdAt = s.created_at ? new Date(s.created_at).toLocaleString('fr-FR') : '';
-        csvRows.push([`"${s.username}"`, `"${s.id}"`, `"${s.article}"`, `"${createdAt}"`, s.frais, `"${s.status}"`].join(","));
+        csvRows.push([`"${s.username}"`, `"${s.id}"`, `"${s.article}"`, `"${s.shipping_method || 'À préciser'}"`, `"${createdAt}"`, s.frais, `"${s.status}"`].join(","));
     }
     const csvString = csvRows.join("\n");
     const csvBlob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
