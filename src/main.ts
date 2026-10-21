@@ -42,10 +42,34 @@ async function authorizeProfile(userId: string): Promise<void> {
 }
 
 function currentFilters(): api.ShipmentFilters {
+    const today = new Date();
+    const toDateInputValue = (date: Date): string => {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    };
+    let createdFrom = '';
+    let createdTo = '';
+    const period = elements.dateRangeFilter.value;
+    if (period === 'custom') {
+        createdFrom = elements.dateFrom.value;
+        createdTo = elements.dateTo.value;
+    } else if (period !== 'all') {
+        const start = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+        if (period === 'last7') start.setDate(start.getDate() - 6);
+        else if (period === 'thisMonth') start.setDate(1);
+        else if (period === 'last30') start.setDate(start.getDate() - 29);
+        createdFrom = toDateInputValue(start);
+        createdTo = toDateInputValue(today);
+    }
+
     return {
         search: elements.searchInput.value,
         username: elements.userFilter.value,
         status: elements.statusFilter.value,
+        createdFrom,
+        createdTo,
     };
 }
 
@@ -304,6 +328,12 @@ elements.searchInput.addEventListener('input', () => {
 });
 elements.userFilter.addEventListener('change', () => { void refreshData(1); });
 elements.statusFilter.addEventListener('change', () => { void refreshData(1); });
+elements.dateRangeFilter.addEventListener('change', () => {
+    elements.customDateRange.classList.toggle('hidden', elements.dateRangeFilter.value !== 'custom');
+    void refreshData(1);
+});
+elements.dateFrom.addEventListener('change', () => { if (elements.dateRangeFilter.value === 'custom') void refreshData(1); });
+elements.dateTo.addEventListener('change', () => { if (elements.dateRangeFilter.value === 'custom') void refreshData(1); });
 elements.pageSize.addEventListener('change', () => {
     pageSize = Number(elements.pageSize.value) || 25;
     void refreshData(1);

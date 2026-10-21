@@ -47,8 +47,8 @@
         #view-shipments > .bg-white.rounded-lg { border: 1px solid #e5eaf1 !important; border-radius: 18px !important; background: #fff !important; box-shadow: 0 8px 30px rgba(23,32,51,.05) !important; }
         #view-shipments > .bg-white.rounded-lg > .p-6 { padding: 1.25rem 1.4rem !important; border-color: #edf0f5 !important; }
         #view-shipments > .bg-white.rounded-lg h2 { color: #172033 !important; font-size: 1rem !important; font-weight: 700 !important; }
-        #user-filter, #status-filter, #search-input, #page-size, #btn-page-prev, #btn-page-next { border-color: #e1e7ef !important; border-radius: 10px !important; background-color: #fff !important; color: #263247 !important; }
-        #user-filter:focus, #status-filter:focus, #search-input:focus { border-color: #d99a2b !important; box-shadow: 0 0 0 3px rgba(217,154,43,.14) !important; }
+        #user-filter, #status-filter, #date-range-filter, #date-from, #date-to, #search-input, #page-size, #btn-page-prev, #btn-page-next { border-color: #e1e7ef !important; border-radius: 10px !important; background-color: #fff !important; color: #263247 !important; }
+        #user-filter:focus, #status-filter:focus, #date-range-filter:focus, #date-from:focus, #date-to:focus, #search-input:focus { border-color: #d99a2b !important; box-shadow: 0 0 0 3px rgba(217,154,43,.14) !important; }
         #view-shipments table thead { background: #f6f8fb !important; color: #66738a !important; }
         #view-shipments table th { padding-top: .95rem !important; padding-bottom: .95rem !important; border-color: #e9edf3 !important; font-size: .68rem !important; letter-spacing: .055em; }
         #tracking-table-body tr { transition: background .15s ease; }
@@ -69,7 +69,7 @@
         .dark #view-shipments > .grid > div h3, .dark #view-shipments > .bg-white.rounded-lg h2 { color: #f1f5f9 !important; }
         .dark #view-shipments > .grid > div p { color: #a7b3c5 !important; }
         .dark #view-shipments > .grid > div > .flex > i { background: #202c40; }
-        .dark #user-filter, .dark #status-filter, .dark #search-input, .dark #page-size, .dark #btn-page-prev, .dark #btn-page-next { border-color: #334155 !important; background-color: #1e293b !important; color: #e2e8f0 !important; }
+        .dark #user-filter, .dark #status-filter, .dark #date-range-filter, .dark #date-from, .dark #date-to, .dark #search-input, .dark #page-size, .dark #btn-page-prev, .dark #btn-page-next { border-color: #334155 !important; background-color: #1e293b !important; color: #e2e8f0 !important; }
         .dark #view-shipments table thead { background: #1c293b !important; color: #a7b3c5 !important; }
         .dark #view-shipments table th, .dark #tracking-table-body td, .dark #view-shipments > .bg-white.rounded-lg > .p-6, .dark #view-shipments > .bg-white.rounded-lg > .flex.border-t { border-color: #29364b !important; }
         .dark #tracking-table-body tr:hover { background: #1b283b !important; }
@@ -79,6 +79,23 @@
             .dashboard-intro { padding: 1.25rem; border-radius: 16px; }
             #view-shipments > .grid > div { min-height: 96px; }
             #view-shipments > .bg-white.rounded-lg > .p-6 { padding: 1rem !important; }
+            #view-shipments .relative.overflow-x-auto { overflow: visible; }
+            #view-shipments table, #view-shipments thead, #tracking-table-body { display: block; width: 100%; }
+            #view-shipments thead { display: none; }
+            #tracking-table-body { display: grid; gap: .75rem; padding: .75rem; }
+            #tracking-table-body tr:not(.empty-state-row) { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); overflow: hidden; border: 1px solid #e4e9f1; border-radius: 14px; background: #fff; }
+            #tracking-table-body td { display: flex; min-width: 0; flex-direction: column; align-items: flex-start; gap: .38rem; padding: .75rem !important; border-color: #edf0f4 !important; }
+            #tracking-table-body td::before { content: attr(data-label); color: #78869a; font-size: .62rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; }
+            #tracking-table-body td[data-label="ID Tracking"], #tracking-table-body td[data-label="Article"] { grid-column: 1 / -1; }
+            #tracking-table-body td[data-label="ID Tracking"] { overflow-wrap: anywhere; }
+            #tracking-table-body td[data-label="Frais"] > div { width: 100%; }
+            #tracking-table-body td[data-label="Actions"] { flex-direction: row; align-items: center; justify-content: flex-end; }
+            #tracking-table-body td[data-label="Actions"]::before { margin-right: auto; }
+            #tracking-table-body tr.empty-state-row { display: block; border: 0; background: transparent; }
+            #tracking-table-body tr.empty-state-row td { display: block; border: 0 !important; }
+            #tracking-table-body tr.empty-state-row td::before { content: none; }
+            .dark #tracking-table-body tr:not(.empty-state-row) { border-color: #29364b; background: #151f2d; }
+            .dark #tracking-table-body td { border-color: #29364b !important; }
         }
         /* New app shell: vertical workspace navigation and a dedicated content canvas. */
         #app-content { display: flex; flex-direction: column; background: #f3f5f8; }
@@ -344,6 +361,23 @@
                                     <option value="Arrivé">Arrivé</option>
                                     <option value="Récupéré">Récupéré</option>
                                 </select>
+                            </div>
+                            <div class="flex flex-col gap-2 w-full sm:w-48">
+                                <div class="relative">
+                                    <i class="fas fa-calendar-days absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                                    <select id="date-range-filter" aria-label="Filtrer par date d’ajout" class="w-full pl-10 pr-4 py-2 border border-gray-200 dark:border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 transition-all text-sm appearance-none bg-white dark:bg-slate-700 dark:text-white">
+                                        <option value="all">Toutes les dates</option>
+                                        <option value="today">Aujourd’hui</option>
+                                        <option value="last7">7 derniers jours</option>
+                                        <option value="thisMonth">Ce mois-ci</option>
+                                        <option value="last30">30 derniers jours</option>
+                                        <option value="custom">Période personnalisée</option>
+                                    </select>
+                                </div>
+                                <div id="custom-date-range" class="hidden grid grid-cols-2 gap-2">
+                                    <input type="date" id="date-from" aria-label="Date de début" class="min-w-0 w-full px-2 py-2 border border-gray-200 dark:border-slate-600 rounded-lg text-xs bg-white dark:bg-slate-700 dark:text-white">
+                                    <input type="date" id="date-to" aria-label="Date de fin" class="min-w-0 w-full px-2 py-2 border border-gray-200 dark:border-slate-600 rounded-lg text-xs bg-white dark:bg-slate-700 dark:text-white">
+                                </div>
                             </div>
                             <div class="relative w-full sm:w-72">
                                 <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>

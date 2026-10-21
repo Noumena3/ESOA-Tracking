@@ -10,6 +10,10 @@ export const elements = {
     searchInput: document.getElementById('search-input') as HTMLInputElement,
     userFilter: document.getElementById('user-filter') as HTMLSelectElement,
     statusFilter: document.getElementById('status-filter') as HTMLSelectElement,
+    dateRangeFilter: document.getElementById('date-range-filter') as HTMLSelectElement,
+    customDateRange: document.getElementById('custom-date-range') as HTMLElement,
+    dateFrom: document.getElementById('date-from') as HTMLInputElement,
+    dateTo: document.getElementById('date-to') as HTMLInputElement,
     btnAdd: document.getElementById('btn-add') as HTMLButtonElement,
     btnExport: document.getElementById('btn-export') as HTMLButtonElement,
     modalAdd: document.getElementById('modal-add') as HTMLElement,
@@ -116,7 +120,7 @@ export function render(
 
     if (shipments.length === 0) {
         tableBody.innerHTML = `
-            <tr>
+            <tr class="empty-state-row">
                 <td colspan="8" class="px-6 py-12 text-center">
                     <div class="flex flex-col items-center justify-center text-gray-400">
                         <i class="fas fa-box-open text-4xl mb-3"></i>
@@ -142,29 +146,29 @@ export function render(
             const isSelected = selectedShipments.has(s.id) ? 'checked' : '';
 
             row.innerHTML = `
-                <td class="px-6 py-4 text-center">
+                <td data-label="Sélectionner" class="px-6 py-4 text-center">
                     <input type="checkbox" ${isSelected} class="w-4 h-4 rounded border-gray-300 text-amber-600 focus:ring-amber-500 checkbox-selection" data-id="${escapeHtml(s.id)}">
                 </td>
-                <td class="px-6 py-4">
+                <td data-label="Utilisateur" class="px-6 py-4">
                     <span class="px-2 py-1 rounded-full text-xs font-medium ${userCol}">${escapeHtml(s.username)}</span>
                 </td>
-                <td class="px-6 py-4 font-medium text-gray-900 font-mono-tag">${escapeHtml(s.id)}</td>
-                <td class="px-6 py-4">${escapeHtml(s.article)}</td>
-                <td class="px-6 py-4 whitespace-nowrap">${escapeHtml(s.created_at ? new Date(s.created_at).toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' }) : '—')}</td>
-                <td class="px-6 py-4">
+                <td data-label="ID Tracking" class="px-6 py-4 font-medium text-gray-900 font-mono-tag">${escapeHtml(s.id)}</td>
+                <td data-label="Article" class="px-6 py-4">${escapeHtml(s.article)}</td>
+                <td data-label="Ajouté le" class="px-6 py-4 whitespace-nowrap">${escapeHtml(s.created_at ? new Date(s.created_at).toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' }) : '—')}</td>
+                <td data-label="Frais" class="px-6 py-4">
                     <div class="flex items-center gap-2">
                         <input type="number" value="${escapeHtml(s.frais)}" class="w-24 px-2 py-1 border border-gray-200 rounded focus:ring-2 focus:ring-amber-500 outline-none text-sm font-medium font-mono-tag frais-input" data-id="${escapeHtml(s.id)}">
                         <span class="text-xs text-gray-500">Ar</span>
                     </div>
                 </td>
-                <td class="px-6 py-4">
+                <td data-label="Statut" class="px-6 py-4">
                     <select class="px-2 py-1 rounded-full text-xs font-medium border-0 focus:ring-2 focus:ring-amber-500 ${statusCol} status-select" data-id="${escapeHtml(s.id)}" aria-label="Statut de l’expédition ${escapeHtml(s.id)}">
                         <option value="En transit" ${s.status === 'En transit' ? 'selected' : ''}>En transit</option>
                         <option value="Arrivé" ${s.status === 'Arrivé' ? 'selected' : ''}>Arrivé</option>
                         <option value="Récupéré" ${s.status === 'Récupéré' ? 'selected' : ''}>Récupéré</option>
                     </select>
                 </td>
-                <td class="px-6 py-4 text-right space-x-2">
+                <td data-label="Actions" class="px-6 py-4 text-right space-x-2">
                     <button class="text-sky-600 hover:text-sky-800 p-1 btn-history-shipment" data-id="${escapeHtml(s.id)}" title="Voir l’historique" aria-label="Voir l’historique de ${escapeHtml(s.id)}">
                         <i class="fas fa-clock" aria-hidden="true"></i>
                     </button>
@@ -246,7 +250,7 @@ export function renderShipmentHistory(shipment: Shipment, entries: import('./api
         const actorIcon = document.createElement('i');
         actorIcon.className = 'fas fa-user-circle';
         actorIcon.setAttribute('aria-hidden', 'true');
-        actor.append(actorIcon, document.createTextNode(entry.username));
+        actor.append(actorIcon, document.createTextNode(`Par ${entry.actor_username || entry.username}`));
         card.append(heading, actor);
 
         if (entry.details && Object.keys(entry.details).length > 0) {

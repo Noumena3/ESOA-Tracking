@@ -25,6 +25,8 @@ export interface ShipmentFilters {
     search: string;
     username: string;
     status: string;
+    createdFrom: string;
+    createdTo: string;
 }
 
 export interface ShipmentSummary {
@@ -48,6 +50,8 @@ export interface AuditLogEntry {
     shipment_id: string;
     action: string;
     username: string;
+    actor_id: string;
+    actor_username?: string;
     details: Record<string, unknown>;
     created_at: string;
 }
@@ -72,6 +76,17 @@ function applyShipmentFilters(query: any, filters: ShipmentFilters): any {
     }
     if (filters.username !== 'All') query = query.eq('username', filters.username);
     if (filters.status !== 'All') query = query.eq('status', filters.status);
+    if (filters.createdFrom) {
+        const start = new Date(`${filters.createdFrom}T00:00:00`);
+        if (!Number.isNaN(start.getTime())) query = query.gte('created_at', start.toISOString());
+    }
+    if (filters.createdTo) {
+        const endExclusive = new Date(`${filters.createdTo}T00:00:00`);
+        if (!Number.isNaN(endExclusive.getTime())) {
+            endExclusive.setDate(endExclusive.getDate() + 1);
+            query = query.lt('created_at', endExclusive.toISOString());
+        }
+    }
     return query;
 }
 
@@ -104,6 +119,37 @@ export async function getShipments(
 }
 
 export async function getShipmentSummary(filters: ShipmentFilters): Promise<ShipmentSummary> {
+    if (filters.createdFrom || filters.createdTo) {
+        const matchingRows: Array<{ status: string; frais: number }> = [];
+        for (let offset = 0; ; offset += 1000) {
+            let query = supabaseClient.from('shipments').select('status, frais');
+            query = applyShipmentFilters(query, filters);
+            const { data, error } = await query.range(offset, offset + 999);
+            if (error) throw error;
+            const page = (data || []) as Array<{ status: string; frais: number }>;
+            matchingRows.push(...page);
+            if (page.length < 1000) break;
+        }
+
+        return matchingRows.reduce<ShipmentSummary>((summary, row) => {
+            const fee = Number(row.frais) || 0;
+            summary.total += 1;
+            summary.totalFees += fee;
+            const status = normalizeShipmentStatus(row.status);
+            if (status === 'Arrivé') {
+                summary.arrived += 1;
+                summary.arrivedFees += fee;
+            } else if (status === 'En transit') {
+                summary.transit += 1;
+                summary.transitFees += fee;
+            } else if (status === 'Récupéré') {
+                summary.collected += 1;
+                summary.collectedFees += fee;
+            }
+            return summary;
+        }, { total: 0, arrived: 0, transit: 0, collected: 0, totalFees: 0, arrivedFees: 0, collectedFees: 0, transitFees: 0 });
+    }
+
     const { data, error } = await supabaseClient.rpc('get_shipment_summary', {
         p_search: filters.search.trim(),
         p_username: filters.username === 'All' ? null : filters.username,
@@ -148,11 +194,25 @@ export async function shipmentExists(id: string): Promise<boolean> {
 export async function getShipmentHistory(shipmentId: string): Promise<AuditLogEntry[]> {
     const { data, error } = await supabaseClient
         .from('audit_logs')
-        .select('id, shipment_id, action, username, details, created_at')
+        .select('id, shipment_id, action, username, actor_id, details, created_at')
         .eq('shipment_id', shipmentId)
         .order('created_at', { ascending: false });
     if (error) throw error;
-    return (data || []) as AuditLogEntry[];
+    const entries = (data || []) as AuditLogEntry[];
+    const actorIds = [...new Set(entries.map(entry => entry.actor_id).filter(Boolean))];
+    if (actorIds.length === 0) return entries;
+
+    const [{ data: { user } }, { data: profiles, error: profileError }] = await Promise.all([
+        supabaseClient.auth.getUser(),
+        supabaseClient.from('profiles').select('id, username').in('id', actorIds),
+    ]);
+    if (profileError) throw profileError;
+    const actorNames = new Map((profiles || []).map((profile: { id: string; username: string }) => [profile.id, profile.username]));
+    return entries.map(entry => ({
+        ...entry,
+        actor_username: actorNames.get(entry.actor_id)
+            || (entry.actor_id === user?.id ? entry.username : 'Administrateur'),
+    }));
 }
 
 export async function updateShipment(id: string, updates: Partial<Shipment>): Promise<boolean> {
