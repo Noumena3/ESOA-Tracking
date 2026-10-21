@@ -106,7 +106,7 @@ function currentFilters(): api.ShipmentFilters {
 function renderCurrentPage(): void {
     render(
         shipments, shipmentSummary, selectedShipments, currentPage, pageSize, totalCount,
-        sortState, handleToggleSelection, handleChangeStatus, handleChangeShippingMethod, handleDeleteShipment, handleUpdateFrais, handleViewHistory
+        sortState, handleToggleSelection, handleChangeStatus, handleDeleteShipment, handleUpdateFrais, handleViewHistory
     );
 }
 
@@ -178,20 +178,6 @@ async function handleChangeStatus(id: string, newStatus: string): Promise<void> 
         await refreshData();
     } catch (err: any) {
         alert("Erreur : " + err.message);
-    } finally {
-        updateLoading(false);
-    }
-}
-
-async function handleChangeShippingMethod(id: string, shippingMethod: string): Promise<void> {
-    if (shippingMethod !== 'Normal' && shippingMethod !== 'Maritime') return;
-    try {
-        updateLoading(true);
-        await api.updateShipment(id, { shipping_method: shippingMethod });
-        await refreshData();
-    } catch (err: any) {
-        alert('Impossible de modifier le mode d’envoi : ' + err.message);
-        await refreshData();
     } finally {
         updateLoading(false);
     }

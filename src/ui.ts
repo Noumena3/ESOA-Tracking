@@ -105,7 +105,6 @@ export function render(
     sortState: { column: string | null, direction: 'asc' | 'desc' },
     onToggleSelection: (id: string) => void,
     onChangeStatus: (id: string, status: string) => void,
-    onChangeShippingMethod: (id: string, shippingMethod: string) => void,
     onDeleteShipment: (id: string) => void,
     onUpdateFrais: (id: string, value: string) => void,
     onViewHistory: (shipment: Shipment) => void
@@ -158,13 +157,7 @@ export function render(
                 </td>
                 <td data-label="ID Tracking" class="px-6 py-4 font-medium text-gray-900 font-mono-tag">${escapeHtml(s.id)}</td>
                 <td data-label="Article" class="px-6 py-4">${escapeHtml(s.article)}</td>
-                <td data-label="Envoi" class="px-6 py-4">
-                    <select class="shipping-method-select px-2 py-1 rounded-lg text-xs font-medium border border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-700 dark:text-white focus:ring-2 focus:ring-amber-500" data-id="${escapeHtml(s.id)}" aria-label="Mode d’envoi de ${escapeHtml(s.id)}">
-                        <option value="" disabled ${s.shipping_method ? '' : 'selected'}>À préciser</option>
-                        <option value="Normal" ${s.shipping_method === 'Normal' ? 'selected' : ''}>Normal (avion)</option>
-                        <option value="Maritime" ${s.shipping_method === 'Maritime' ? 'selected' : ''}>Maritime</option>
-                    </select>
-                </td>
+                <td data-label="Envoi" class="px-6 py-4">${s.shipping_method === 'Normal' ? 'Normal (avion)' : s.shipping_method === 'Maritime' ? 'Maritime' : 'À préciser'}</td>
                 <td data-label="Ajouté le" class="px-6 py-4 whitespace-nowrap">${escapeHtml(s.created_at ? new Date(s.created_at).toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' }) : '—')}</td>
                 <td data-label="Frais" class="px-6 py-4">
                     <div class="flex items-center gap-2">
@@ -201,12 +194,6 @@ export function render(
             (select as HTMLSelectElement).addEventListener('change', (event) => {
                 const target = event.currentTarget as HTMLSelectElement;
                 onChangeStatus(target.dataset.id!, target.value);
-            });
-        });
-        tableBody.querySelectorAll('.shipping-method-select').forEach(select => {
-            (select as HTMLSelectElement).addEventListener('change', (event) => {
-                const target = event.currentTarget as HTMLSelectElement;
-                onChangeShippingMethod(target.dataset.id!, target.value);
             });
         });
         tableBody.querySelectorAll('.btn-delete-shipment').forEach(btn => {
